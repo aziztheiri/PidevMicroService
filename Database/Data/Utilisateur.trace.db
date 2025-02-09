@@ -63,3 +63,7 @@ ALTER TABLE "PUBLIC"."UTILISATEUR_COPY_3_0" ADD CONSTRAINT "UTILISATEUR_COPY_3_0
 org.h2.jdbc.JdbcSQLDataException: Erreur lors de la conversion de données "'CUSTOMER' (UTILISATEUR: ""USER_ROLE"" TINYINT)"
 Data conversion error converting "'CUSTOMER' (UTILISATEUR: ""USER_ROLE"" TINYINT)"; SQL statement:
 insert into utilisateur (email,image,is_verified,name,password,user_role,cin) values (?,?,?,?,?,?,?) [22018-224]
+2025-02-09 13:59:13.714504+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "UTILVERIFICATION_TOKEN" non trouvée
+Table "UTILVERIFICATION_TOKEN" not found; SQL statement:
+SELECT * FROM UTILVERIFICATION_TOKEN [42102-224]

@@ -3,7 +3,9 @@ package com.example.pidevmicroservice.services;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.entities.User;
+import com.example.pidevmicroservice.entities.VerificationToken;
 import com.example.pidevmicroservice.enums.UserRole;
+import com.example.pidevmicroservice.repositories.TokenRepository;
 import com.example.pidevmicroservice.repositories.UserRepository;
 import com.example.pidevmicroservice.services.IUserService;
 import lombok.RequiredArgsConstructor;
@@ -11,12 +13,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
 public class UserService implements IUserService {
     private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;
+    private final EmailService emailService;
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -28,6 +34,11 @@ public class UserService implements IUserService {
         Cloudinary cloudinary = getCloudinaryInstance();
         Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
         return uploadResult.get("url").toString();
+    }
+    private String generateOtp() {
+        Random random = new Random();
+        int otp = 100000 + random.nextInt(900000);
+        return String.valueOf(otp);
     }
     @Override
     public User signup(User user, MultipartFile image) throws IOException {
@@ -42,6 +53,21 @@ public class UserService implements IUserService {
                 user.setImage(imageUrl);
             }
           user.setUserRole(UserRole.CUSTOMER);
+        user.setVerified(false);
+        User savedUser = userRepository.save(user);
+
+        // Generate OTP
+        String otp = generateOtp();
+
+        // Create token with expiry (e.g., 15 minutes from now)
+        VerificationToken token = new VerificationToken();
+        token.setToken(otp);
+        token.setUser(savedUser);
+        token.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        tokenRepository.save(token);
+
+        // Send OTP email
+        emailService.sendOtpEmail(savedUser.getEmail(), otp);
        return userRepository.save(user);
 
     }
