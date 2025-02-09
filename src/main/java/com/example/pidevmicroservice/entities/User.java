@@ -19,7 +19,6 @@ public class User {
     private String email;
     private String password;
     private String name;
-    @Enumerated(EnumType.STRING)
     private UserRole userRole;
     private boolean isVerified;
     private String image;
