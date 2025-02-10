@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Data
 @Entity
 @AllArgsConstructor
@@ -22,5 +24,7 @@ public class User {
     private UserRole userRole;
     private boolean isVerified;
     private String image;
+    private String location;
+    private LocalDateTime creationDate;
 
 }

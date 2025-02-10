@@ -10,11 +10,13 @@ import com.example.pidevmicroservice.services.IUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Random;
 
 @RestController
@@ -26,6 +28,16 @@ public class UserRestController {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<User>> getAllUsers() {
+        return new ResponseEntity<>(userService.getAllUser(), HttpStatus.OK);
+    }
+    @GetMapping(value = "/{cin}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> getUserById(@PathVariable(value = "cin") String cin) {
+        return new ResponseEntity<>(userService.getUserById(cin), HttpStatus.OK);
+    }
     @PostMapping
     public ResponseEntity<?> signup(
             @RequestParam("user") String userJson,
@@ -99,5 +111,17 @@ public class UserRestController {
 
         return ResponseEntity.ok("OTP has been resent successfully");
     }
+    @PutMapping(value = "/{cin}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> updateUser(@PathVariable(value = "id") String cin, @RequestBody User user){
+        return new ResponseEntity<>(userService.updateUser(cin, user),
+                HttpStatus.OK);
+    }
+    @DeleteMapping(value = "/{cin}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> deleteUser(@PathVariable(value = "cin") String cin){
+        return new ResponseEntity<>(userService.deleteUser(cin), HttpStatus.OK);
+    }
+
 
 }

@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -53,6 +54,7 @@ public class UserService implements IUserService {
                 user.setImage(imageUrl);
             }
           user.setUserRole(UserRole.CUSTOMER);
+            user.setCreationDate(LocalDateTime.now());
         user.setVerified(false);
         User savedUser = userRepository.save(user);
 
@@ -70,5 +72,37 @@ public class UserService implements IUserService {
         emailService.sendOtpEmail(savedUser.getEmail(), otp);
        return userRepository.save(user);
 
+    }
+    @Override
+    public List<User> getAllUser() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User getUserById(String cin) {
+        return userRepository.findById(cin).orElse(null);
+    }
+    @Override
+    public User updateUser(String cin, User newUser) {
+        if (userRepository.findById(cin).isPresent()) {
+            User existingUser = userRepository.findById(cin).get();
+            existingUser.setName(newUser.getName());
+            existingUser.setEmail(newUser.getEmail());
+            existingUser.setLocation(newUser.getLocation());
+            existingUser.setPassword(newUser.getPassword());
+            existingUser.setVerified(true);
+
+            return userRepository.save(existingUser);
+        } else
+            return null;
+    }
+
+    @Override
+    public String deleteUser(String cin) {
+        if (userRepository.findById(cin).isPresent()) {
+            userRepository.deleteById(cin);
+            return "utilisateur supprimé";
+        } else
+            return "utilisateur non supprimé";
     }
 }
