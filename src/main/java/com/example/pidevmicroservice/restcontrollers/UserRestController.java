@@ -1,5 +1,7 @@
 package com.example.pidevmicroservice.restcontrollers;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.DTO.OtpVerificationRequest;
 import com.example.pidevmicroservice.entities.User;
 import com.example.pidevmicroservice.entities.VerificationToken;
@@ -8,6 +10,8 @@ import com.example.pidevmicroservice.repositories.UserRepository;
 import com.example.pidevmicroservice.services.EmailService;
 import com.example.pidevmicroservice.services.IUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,8 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @RestController
@@ -28,6 +34,18 @@ public class UserRestController {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private Cloudinary getCloudinaryInstance() {
+        return new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", "dmwttu9lu",
+                "api_key", "974645429429234",
+                "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
+        ));
+    }
+    private String uploadImageToCloud(MultipartFile image) throws IOException {
+        Cloudinary cloudinary = getCloudinaryInstance();
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+        return uploadResult.get("url").toString();
+    }
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<User>> getAllUsers() {
@@ -111,12 +129,47 @@ public class UserRestController {
 
         return ResponseEntity.ok("OTP has been resent successfully");
     }
-    @PutMapping(value = "/{cin}")
-    @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<User> updateUser(@PathVariable(value = "id") String cin, @RequestBody User user){
-        return new ResponseEntity<>(userService.updateUser(cin, user),
-                HttpStatus.OK);
+    @PutMapping("/{cin}")
+    public ResponseEntity<?> updateUser(@PathVariable String cin,
+                                        @RequestParam("user") String userJson,
+                                        @RequestParam(value = "image", required = false) MultipartFile image) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            // Register the JavaTimeModule BEFORE deserialization!
+            mapper.registerModule(new JavaTimeModule());
+            // Optionally, disable writing dates as timestamps for a better format.
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            // Now deserialize the JSON string into a User object.
+            User user = mapper.readValue(userJson, User.class);
+
+            if (image != null && !image.isEmpty()) {
+                String imageUrl = uploadImageToCloud(image);
+                user.setImage(imageUrl); // Set the new image URL
+            }
+
+            User existingUser = userRepository.findById(cin).orElse(null);
+            if (existingUser == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Preserve the original creation date
+            user.setCreationDate(existingUser.getCreationDate());
+            User updatedUser = userService.updateUser(cin, user);
+
+            if (updatedUser != null) {
+                return ResponseEntity.ok(updatedUser);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user.");
+        }
     }
+
+
+
     @DeleteMapping(value = "/{cin}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteUser(@PathVariable(value = "cin") String cin){

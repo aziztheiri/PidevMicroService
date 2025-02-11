@@ -1,6 +1,7 @@
 package com.example.pidevmicroservice.entities;
 
 import com.example.pidevmicroservice.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
+
 @Table(name = "Utilisateur")
 public class User {
     @Id

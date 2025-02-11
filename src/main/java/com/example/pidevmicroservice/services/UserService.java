@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -84,18 +85,24 @@ public class UserService implements IUserService {
     }
     @Override
     public User updateUser(String cin, User newUser) {
-        if (userRepository.findById(cin).isPresent()) {
-            User existingUser = userRepository.findById(cin).get();
+        Optional<User> existingUserOpt = userRepository.findById(cin);
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
             existingUser.setName(newUser.getName());
             existingUser.setEmail(newUser.getEmail());
             existingUser.setLocation(newUser.getLocation());
             existingUser.setPassword(newUser.getPassword());
-            existingUser.setVerified(true);
+            // Only update the image if a new one is provided
+            if (newUser.getImage() != null) {
+                existingUser.setImage(newUser.getImage());
+            }
 
             return userRepository.save(existingUser);
-        } else
-            return null;
+        } else {
+            throw new RuntimeException("User not found");
+        }
     }
+
 
     @Override
     public String deleteUser(String cin) {
