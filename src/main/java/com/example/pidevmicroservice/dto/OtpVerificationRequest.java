@@ -1,7 +1,7 @@
-package com.example.pidevmicroservice.DTO;
+package com.example.pidevmicroservice.dto;
 
 import lombok.Data;
-import lombok.Getter;
+
 
 @Data
 public class OtpVerificationRequest {

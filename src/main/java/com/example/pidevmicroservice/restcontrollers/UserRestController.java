@@ -2,7 +2,7 @@ package com.example.pidevmicroservice.restcontrollers;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.pidevmicroservice.DTO.OtpVerificationRequest;
+import com.example.pidevmicroservice.dto.OtpVerificationRequest;
 import com.example.pidevmicroservice.entities.User;
 import com.example.pidevmicroservice.entities.VerificationToken;
 import com.example.pidevmicroservice.repositories.TokenRepository;
@@ -57,11 +57,14 @@ public class UserRestController {
         return new ResponseEntity<>(userService.getUserById(cin), HttpStatus.OK);
     }
     @PostMapping
-    public ResponseEntity<?> signup(
+    public ResponseEntity<Object> signup(
             @RequestParam("user") String userJson,
             @RequestParam(value = "image", required = false) MultipartFile image) {
         ObjectMapper mapper = new ObjectMapper();
         try {
+            mapper.registerModule(new JavaTimeModule());
+            // Optionally, disable writing dates as timestamps for a better format.
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             // Conversion du JSON en objet User
             User user = mapper.readValue(userJson, User.class);
             // Appel du service pour l'inscription
@@ -80,7 +83,7 @@ public class UserRestController {
         }
     }
     @PostMapping("/verify")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerificationRequest request) {
+    public ResponseEntity<String> verifyOtp(@RequestBody OtpVerificationRequest request) {
         VerificationToken token = tokenRepository.findByUserEmail(request.getEmail());
         if (token != null &&
                 token.getToken().equals(request.getOtp()) &&
@@ -95,13 +98,13 @@ public class UserRestController {
             return ResponseEntity.badRequest().body("Invalid or expired OTP");
         }
     }
+    private Random random = new Random();
     private String generateOtp() {
-        Random random = new Random();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestBody OtpVerificationRequest request) {
+    public ResponseEntity<String> resendOtp(@RequestBody OtpVerificationRequest request) {
         // Check if the user exists
         User user = userRepository.findByEmail(request.getEmail());
         if (user == null) {
@@ -130,7 +133,7 @@ public class UserRestController {
         return ResponseEntity.ok("OTP has been resent successfully");
     }
     @PutMapping("/{cin}")
-    public ResponseEntity<?> updateUser(@PathVariable String cin,
+    public ResponseEntity<Object> updateUser(@PathVariable String cin,
                                         @RequestParam("user") String userJson,
                                         @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
@@ -180,5 +183,9 @@ public class UserRestController {
     public ResponseEntity<User> desactivateUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.desactivateUser(cin), HttpStatus.OK);
     }
-
+    @PostMapping(value = "/activate/{cin}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> activateUser(@PathVariable(value = "cin") String cin){
+        return new ResponseEntity<>(userService.activateUser(cin), HttpStatus.OK);
+    }
 }

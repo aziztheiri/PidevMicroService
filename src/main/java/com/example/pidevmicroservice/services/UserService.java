@@ -7,7 +7,6 @@ import com.example.pidevmicroservice.entities.VerificationToken;
 import com.example.pidevmicroservice.enums.UserRole;
 import com.example.pidevmicroservice.repositories.TokenRepository;
 import com.example.pidevmicroservice.repositories.UserRepository;
-import com.example.pidevmicroservice.services.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,18 +36,19 @@ public class UserService implements IUserService {
         Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
         return uploadResult.get("url").toString();
     }
+    private     Random random = new Random();
     private String generateOtp() {
-        Random random = new Random();
+
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
     @Override
     public User signup(User user, MultipartFile image) throws IOException {
         if (userRepository.findByEmail(user.getEmail()) != null) {
-            throw new RuntimeException("L'email existe déjà.");
+            throw new Exceptions.EmailAlreadyExists("L'email existe déjà.");
         }
         if (userRepository.existsById(user.getCin())) {
-            throw new RuntimeException("Un utilisateur avec ce CIN existe déjà.");
+            throw new Exceptions.UserAlreadyExistsException("Un utilisateur avec ce CIN existe déjà.");
         }
             if (image != null && !image.isEmpty()) {
                 String imageUrl = uploadImageToCloud(image);
@@ -99,7 +99,7 @@ public class UserService implements IUserService {
 
             return userRepository.save(existingUser);
         } else {
-            throw new RuntimeException("User not found");
+            throw new Exceptions.UserNotFoundException("User with CIN " + cin + " not found");
         }
     }
 
@@ -119,5 +119,13 @@ public class UserService implements IUserService {
         assert user != null;
         user.setVerified(false);
      return userRepository.save(user);
+    }
+
+    @Override
+    public User activateUser(String cin) {
+        User user = userRepository.findById(cin).orElse(null);
+        assert user != null;
+        user.setVerified(true);
+        return userRepository.save(user);
     }
 }

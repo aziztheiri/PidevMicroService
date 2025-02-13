@@ -102,3 +102,338 @@ Syntax error in SQL statement "INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VE
 INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES
 (24567, 'john.doe@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample1.png', TRUE, 'John Doe', 'password123!', 2, '2025-03-15 18:30:20.0', 'Location B'),
 (35678, 'jane.smith@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample2.png', FALSE, 'Jane Smith', 'securePass#4', 1, '2025-04-20 10:15:45.5', 'Location C'), [42001-224]
+2025-02-13 17:46:04.980021+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" non trouvée
+Table "USERS" not found; SQL statement:
+SET @total = (SELECT COUNT(*) FROM users) [42102-224]
+2025-02-13 17:46:04.996758+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "SET @[*]rownum = 0"; attendu "identifier"
+Syntax error in SQL statement "SET @[*]rownum = 0"; expected "identifier"; SQL statement:
+SET @rownum = 0 [42001-224]
+2025-02-13 17:46:04.996758+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" non trouvée
+Table "USERS" not found; SQL statement:
+-- Update each row based on its row number
+UPDATE users
+SET location = CASE
+  WHEN (@rownum := @rownum + 1) <= @half THEN 'Tunis'
+  ELSE 'Kef'
+END
+ORDER BY id [42102-224]
+2025-02-13 17:46:23.248800+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" non trouvée
+Table "USERS" not found; SQL statement:
+WITH numbered AS (
+  SELECT 
+    id, 
+    ROW_NUMBER() OVER (ORDER BY id) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM users
+)
+UPDATE users
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.id = numbered.id [42102-224]
+2025-02-13 17:46:39.933494+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Colonne "ID" non trouvée
+Column "ID" not found; SQL statement:
+WITH numbered AS (
+  SELECT 
+    id, 
+    ROW_NUMBER() OVER (ORDER BY id) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM utilisateur
+)
+UPDATE utilisateur
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.id = numbered.id [42122-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.expression.ExpressionColumn.getColumnException(ExpressionColumn.java:244)
+	at org.h2.expression.ExpressionColumn.optimizeOther(ExpressionColumn.java:226)
+	at org.h2.expression.ExpressionColumn.optimize(ExpressionColumn.java:213)
+	at org.h2.command.query.Select.prepareExpressions(Select.java:1170)
+	at org.h2.command.query.Query.prepare(Query.java:218)
+	at org.h2.table.QueryExpressionTable.createQueryColumnTemplateList(QueryExpressionTable.java:98)
+	at org.h2.command.Parser.parseSingleCommonTableExpression(Parser.java:7071)
+	at org.h2.command.Parser.parseWith1(Parser.java:6954)
+	at org.h2.command.Parser.parseWith(Parser.java:6939)
+	at org.h2.command.Parser.parseWithStatementOrQuery(Parser.java:2507)
+	at org.h2.command.Parser.parsePrepared(Parser.java:631)
+	at org.h2.command.Parser.parse(Parser.java:592)
+	at org.h2.command.Parser.parse(Parser.java:564)
+	at org.h2.command.Parser.prepareCommand(Parser.java:483)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:639)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:559)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1166)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1345)
+	at org.h2.server.web.WebApp.query(WebApp.java:1143)
+	at org.h2.server.web.WebApp.query(WebApp.java:1119)
+	at org.h2.server.web.WebApp.process(WebApp.java:245)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:177)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2025-02-13 17:46:48.864880+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Colonne "ID" non trouvée
+Column "ID" not found; SQL statement:
+WITH numbered AS (
+  SELECT 
+    cin, 
+    ROW_NUMBER() OVER (ORDER BY id) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM utilisateur
+)
+UPDATE utilisateur
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.id = numbered.id [42122-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.expression.ExpressionColumn.getColumnException(ExpressionColumn.java:244)
+	at org.h2.expression.ExpressionColumn.optimizeOther(ExpressionColumn.java:226)
+	at org.h2.expression.ExpressionColumn.optimize(ExpressionColumn.java:213)
+	at org.h2.expression.analysis.Window.optimize(Window.java:169)
+	at org.h2.expression.analysis.DataAnalysisOperation.optimize(DataAnalysisOperation.java:163)
+	at org.h2.expression.analysis.WindowFunction.optimize(WindowFunction.java:452)
+	at org.h2.expression.Alias.optimize(Alias.java:52)
+	at org.h2.command.query.Select.prepareExpressions(Select.java:1170)
+	at org.h2.command.query.Query.prepare(Query.java:218)
+	at org.h2.table.QueryExpressionTable.createQueryColumnTemplateList(QueryExpressionTable.java:98)
+	at org.h2.command.Parser.parseSingleCommonTableExpression(Parser.java:7071)
+	at org.h2.command.Parser.parseWith1(Parser.java:6954)
+	at org.h2.command.Parser.parseWith(Parser.java:6939)
+	at org.h2.command.Parser.parseWithStatementOrQuery(Parser.java:2507)
+	at org.h2.command.Parser.parsePrepared(Parser.java:631)
+	at org.h2.command.Parser.parse(Parser.java:592)
+	at org.h2.command.Parser.parse(Parser.java:564)
+	at org.h2.command.Parser.prepareCommand(Parser.java:483)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:639)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:559)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1166)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1345)
+	at org.h2.server.web.WebApp.query(WebApp.java:1143)
+	at org.h2.server.web.WebApp.query(WebApp.java:1119)
+	at org.h2.server.web.WebApp.process(WebApp.java:245)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:177)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2025-02-13 17:46:58.446071+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Colonne "ID" non trouvée
+Column "ID" not found; SQL statement:
+WITH numbered AS (
+  SELECT 
+    cin, 
+    ROW_NUMBER() OVER (ORDER BY id) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM utilisateur
+)
+UPDATE utilisateur
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.cin= numbered.cin [42122-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:514)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.expression.ExpressionColumn.getColumnException(ExpressionColumn.java:244)
+	at org.h2.expression.ExpressionColumn.optimizeOther(ExpressionColumn.java:226)
+	at org.h2.expression.ExpressionColumn.optimize(ExpressionColumn.java:213)
+	at org.h2.expression.analysis.Window.optimize(Window.java:169)
+	at org.h2.expression.analysis.DataAnalysisOperation.optimize(DataAnalysisOperation.java:163)
+	at org.h2.expression.analysis.WindowFunction.optimize(WindowFunction.java:452)
+	at org.h2.expression.Alias.optimize(Alias.java:52)
+	at org.h2.command.query.Select.prepareExpressions(Select.java:1170)
+	at org.h2.command.query.Query.prepare(Query.java:218)
+	at org.h2.table.QueryExpressionTable.createQueryColumnTemplateList(QueryExpressionTable.java:98)
+	at org.h2.command.Parser.parseSingleCommonTableExpression(Parser.java:7071)
+	at org.h2.command.Parser.parseWith1(Parser.java:6954)
+	at org.h2.command.Parser.parseWith(Parser.java:6939)
+	at org.h2.command.Parser.parseWithStatementOrQuery(Parser.java:2507)
+	at org.h2.command.Parser.parsePrepared(Parser.java:631)
+	at org.h2.command.Parser.parse(Parser.java:592)
+	at org.h2.command.Parser.parse(Parser.java:564)
+	at org.h2.command.Parser.prepareCommand(Parser.java:483)
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:639)
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:559)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1166)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.server.web.WebApp.getResult(WebApp.java:1345)
+	at org.h2.server.web.WebApp.query(WebApp.java:1143)
+	at org.h2.server.web.WebApp.query(WebApp.java:1119)
+	at org.h2.server.web.WebApp.process(WebApp.java:245)
+	at org.h2.server.web.WebApp.processRequest(WebApp.java:177)
+	at org.h2.server.web.JakartaWebServlet.doGet(JakartaWebServlet.java:129)
+	at org.h2.server.web.JakartaWebServlet.doPost(JakartaWebServlet.java:166)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1190)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+2025-02-13 17:47:07.678918+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "WITH numbered AS (\000d\000a  SELECT \000d\000a    cin, \000d\000a    ROW_NUMBER() OVER (ORDER BY cin) AS rn, \000d\000a    COUNT(*) OVER () AS total\000d\000a  FROM utilisateur\000d\000a)\000d\000aUPDATE utilisateur\000d\000aSET location = CASE\000d\000a  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'\000d\000a  ELSE 'Kef'\000d\000aEND\000d\000a[*]FROM numbered\000d\000aWHERE users.cin= numbered.cin"
+Syntax error in SQL statement "WITH numbered AS (\000d\000a  SELECT \000d\000a    cin, \000d\000a    ROW_NUMBER() OVER (ORDER BY cin) AS rn, \000d\000a    COUNT(*) OVER () AS total\000d\000a  FROM utilisateur\000d\000a)\000d\000aUPDATE utilisateur\000d\000aSET location = CASE\000d\000a  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'\000d\000a  ELSE 'Kef'\000d\000aEND\000d\000a[*]FROM numbered\000d\000aWHERE users.cin= numbered.cin"; SQL statement:
+WITH numbered AS (
+  SELECT 
+    cin, 
+    ROW_NUMBER() OVER (ORDER BY cin) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM utilisateur
+)
+UPDATE utilisateur
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.cin= numbered.cin [42000-224]
+2025-02-13 17:47:20.173555+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "WITH numbered AS (\000d\000a  SELECT \000d\000a    cin, \000d\000a    ROW_NUMBER() OVER (ORDER BY cin) AS rn, \000d\000a    COUNT(*) OVER () AS total\000d\000a  FROM utilisateur\000d\000a)\000d\000aUPDATE utilisateur\000d\000aSET location = CASE\000d\000a  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'\000d\000a  ELSE 'Kef'\000d\000aEND\000d\000a[*]FROM numbered\000d\000aWHERE users.cin= numbered.cin"
+Syntax error in SQL statement "WITH numbered AS (\000d\000a  SELECT \000d\000a    cin, \000d\000a    ROW_NUMBER() OVER (ORDER BY cin) AS rn, \000d\000a    COUNT(*) OVER () AS total\000d\000a  FROM utilisateur\000d\000a)\000d\000aUPDATE utilisateur\000d\000aSET location = CASE\000d\000a  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'\000d\000a  ELSE 'Kef'\000d\000aEND\000d\000a[*]FROM numbered\000d\000aWHERE users.cin= numbered.cin"; SQL statement:
+WITH numbered AS (
+  SELECT 
+    cin, 
+    ROW_NUMBER() OVER (ORDER BY cin) AS rn, 
+    COUNT(*) OVER () AS total
+  FROM utilisateur
+)
+UPDATE utilisateur
+SET location = CASE
+  WHEN numbered.rn <= numbered.total/2 THEN 'Tunis'
+  ELSE 'Kef'
+END
+FROM numbered
+WHERE users.cin= numbered.cin [42000-224]
