@@ -175,6 +175,10 @@ public class UserRestController {
     public ResponseEntity<String> deleteUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.deleteUser(cin), HttpStatus.OK);
     }
-
+    @PostMapping(value = "/desactivate/{cin}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> desactivateUser(@PathVariable(value = "cin") String cin){
+        return new ResponseEntity<>(userService.desactivateUser(cin), HttpStatus.OK);
+    }
 
 }

@@ -67,3 +67,38 @@ insert into utilisateur (email,image,is_verified,name,password,user_role,cin) va
 org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "UTILVERIFICATION_TOKEN" non trouvée
 Table "UTILVERIFICATION_TOKEN" not found; SQL statement:
 SELECT * FROM UTILVERIFICATION_TOKEN [42102-224]
+2025-02-13 10:52:55.154917+01:00 jdbc[53]: null
+org.h2.message.DbException: La connexion n'a pas été fermée et a été récupérée par le ramasse miette.
+The connection was not closed by the application and is garbage collected [90018-224]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:218)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:135)
+	at org.h2.Driver.connect(Driver.java:59)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:137)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:360)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:202)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:461)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:724)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:703)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: La connexion n'a pas été fermée et a été récupérée par le ramasse miette.
+The connection was not closed by the application and is garbage collected [90018-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 16 more
+2025-02-13 13:08:20.171714+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES\000d\000a(17897, 'farahbennour43@gmail.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/boyztjhgfxugtztvxcge.png', TRUE, 'Farah Bennour', 'aijojif!8D', 1, '2025-02-11 21:51:34.9', 'Location A'),[*]"; attendu "ROW (, (, DEFAULT, INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"
+Syntax error in SQL statement "INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES\000d\000a(17897, 'farahbennour43@gmail.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/boyztjhgfxugtztvxcge.png', TRUE, 'Farah Bennour', 'aijojif!8D', 1, '2025-02-11 21:51:34.9', 'Location A'),[*]"; expected "ROW (, (, DEFAULT, INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES
+(17897, 'farahbennour43@gmail.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/boyztjhgfxugtztvxcge.png', TRUE, 'Farah Bennour', 'aijojif!8D', 1, '2025-02-11 21:51:34.9', 'Location A'), [42001-224]
+2025-02-13 13:08:43.056081+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES\000d\000a(24567, 'john.doe@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample1.png', TRUE, 'John Doe', 'password123!', 2, '2025-03-15 18:30:20.0', 'Location B'),\000d\000a(35678, 'jane.smith@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample2.png', FALSE, 'Jane Smith', 'securePass#4', 1, '2025-04-20 10:15:45.5', 'Location C'),[*]"; attendu "ROW (, (, DEFAULT, INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"
+Syntax error in SQL statement "INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES\000d\000a(24567, 'john.doe@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample1.png', TRUE, 'John Doe', 'password123!', 2, '2025-03-15 18:30:20.0', 'Location B'),\000d\000a(35678, 'jane.smith@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample2.png', FALSE, 'Jane Smith', 'securePass#4', 1, '2025-04-20 10:15:45.5', 'Location C'),[*]"; expected "ROW (, (, DEFAULT, INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+INSERT INTO utilisateur (CIN, EMAIL, IMAGE, IS_VERIFIED, NAME, PASSWORD, USER_ROLE, CREATION_DATE, LOCATION) VALUES
+(24567, 'john.doe@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample1.png', TRUE, 'John Doe', 'password123!', 2, '2025-03-15 18:30:20.0', 'Location B'),
+(35678, 'jane.smith@example.com', 'http://res.cloudinary.com/dmwttu9lu/image/upload/v1739307101/sample2.png', FALSE, 'Jane Smith', 'securePass#4', 1, '2025-04-20 10:15:45.5', 'Location C'), [42001-224]

@@ -12,4 +12,5 @@ public interface IUserService {
     public User getUserById(String cin );
     public User updateUser(String cin, User newUser);
     public String deleteUser(String cin);
+    public User desactivateUser(String cin);
 }

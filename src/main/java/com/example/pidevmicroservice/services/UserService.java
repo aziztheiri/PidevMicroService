@@ -112,4 +112,12 @@ public class UserService implements IUserService {
         } else
             return "utilisateur non supprimé";
     }
+
+    @Override
+    public User desactivateUser(String cin) {
+      User user = userRepository.findById(cin).orElse(null);
+        assert user != null;
+        user.setVerified(false);
+     return userRepository.save(user);
+    }
 }
