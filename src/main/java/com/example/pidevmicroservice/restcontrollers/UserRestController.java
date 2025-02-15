@@ -46,17 +46,17 @@ public class UserRestController {
         Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
         return uploadResult.get("url").toString();
     }
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/admin")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<User>> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUser(), HttpStatus.OK);
     }
-    @GetMapping(value = "/{cin}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/admin/{cin}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> getUserById(@PathVariable(value = "cin") String cin) {
         return new ResponseEntity<>(userService.getUserById(cin), HttpStatus.OK);
     }
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<Object> signup(
             @RequestParam("user") String userJson,
             @RequestParam(value = "image", required = false) MultipartFile image) {
@@ -132,7 +132,7 @@ public class UserRestController {
 
         return ResponseEntity.ok("OTP has been resent successfully");
     }
-    @PutMapping("/{cin}")
+    @PutMapping("/admin/{cin}")
     public ResponseEntity<Object> updateUser(@PathVariable String cin,
                                         @RequestParam("user") String userJson,
                                         @RequestParam(value = "image", required = false) MultipartFile image) {
@@ -170,20 +170,24 @@ public class UserRestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user.");
         }
     }
+    @DeleteMapping("/logout/{userId}")
+    public ResponseEntity<String> logout(@PathVariable String userId) {
+        userService.logoutFromKeycloak(userId);
+        return ResponseEntity.ok("User logged out successfully");
+    }
 
 
-
-    @DeleteMapping(value = "/{cin}")
+    @DeleteMapping(value = "/admin/{cin}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.deleteUser(cin), HttpStatus.OK);
     }
-    @PostMapping(value = "/desactivate/{cin}")
+    @PostMapping(value = "/admin/desactivate/{cin}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> desactivateUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.desactivateUser(cin), HttpStatus.OK);
     }
-    @PostMapping(value = "/activate/{cin}")
+    @PostMapping(value = "/admin/activate/{cin}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> activateUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.activateUser(cin), HttpStatus.OK);
