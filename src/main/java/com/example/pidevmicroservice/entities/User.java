@@ -22,6 +22,7 @@ public class User {
     @Id
     private String cin;
     private String email;
+    private String keycloakId;
     private String password;
     private String name;
     private UserRole userRole;

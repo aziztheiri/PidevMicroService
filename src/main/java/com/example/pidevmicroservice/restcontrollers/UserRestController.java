@@ -13,6 +13,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +39,8 @@ public class UserRestController {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    @Value("${keycloak.realm}")
+    private String realm;
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -55,6 +62,11 @@ public class UserRestController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> getUserById(@PathVariable(value = "cin") String cin) {
         return new ResponseEntity<>(userService.getUserById(cin), HttpStatus.OK);
+    }
+    @GetMapping(value = "/user/getemail/{email}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> getUserByEmail(@PathVariable(value = "email") String email) {
+        return new ResponseEntity<>(userRepository.findByEmail(email), HttpStatus.OK);
     }
     @PostMapping("/signup")
     public ResponseEntity<Object> signup(
@@ -82,6 +94,28 @@ public class UserRestController {
                     .body("Erreur lors du traitement de la requête.");
         }
     }
+    private Keycloak getKeycloakAdminClient() {
+        return  KeycloakBuilder.builder()
+                .serverUrl("http://localhost:8180")
+                .realm("master")  // Use 'master' realm for admin access
+                .clientId("admin-cli")  // Use 'admin-cli' for admin-level actions
+                .username("admin")  // Your Keycloak admin username
+                .password("admin")  // Your Keycloak admin password
+                .grantType(OAuth2Constants.PASSWORD)
+                .build();
+    }
+    private void updateUserInKeycloak(User user) {
+        Keycloak keycloak = getKeycloakAdminClient();
+        UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
+
+        keycloakUser.setEmail(user.getEmail());
+        keycloakUser.setUsername(user.getEmail());
+        keycloakUser.setFirstName(user.getName());
+        keycloakUser.setLastName(user.getName());
+        keycloakUser.setEnabled(user.isVerified());
+        keycloakUser.setEmailVerified(user.isVerified());
+        keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
+    }
     @PostMapping("/verify")
     public ResponseEntity<String> verifyOtp(@RequestBody OtpVerificationRequest request) {
         VerificationToken token = tokenRepository.findByUserEmail(request.getEmail());
@@ -89,7 +123,9 @@ public class UserRestController {
                 token.getToken().equals(request.getOtp()) &&
                 token.getExpiryDate().isAfter(LocalDateTime.now())) {
             User user = token.getUser();
+
             user.setVerified(true);
+            updateUserInKeycloak(user);
             userRepository.save(user);
             // Optionally, delete the token now
             tokenRepository.delete(token);
@@ -103,6 +139,7 @@ public class UserRestController {
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
+
     @PostMapping("/resend-otp")
     public ResponseEntity<String> resendOtp(@RequestBody OtpVerificationRequest request) {
         // Check if the user exists
@@ -169,11 +206,6 @@ public class UserRestController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user.");
         }
-    }
-    @DeleteMapping("/logout/{userId}")
-    public ResponseEntity<String> logout(@PathVariable String userId) {
-        userService.logoutFromKeycloak(userId);
-        return ResponseEntity.ok("User logged out successfully");
     }
 
 

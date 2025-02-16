@@ -52,21 +52,40 @@ public class UserService implements IUserService {
                 "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
         ));
     }
-    @Override
-    public void logoutFromKeycloak(String userId) {
-        Keycloak keycloak = KeycloakBuilder.builder()
-                .serverUrl(keycloakUrl)
-                .realm("master")  // Use 'master' for admin access
-                .clientId("admin-cli")
-                .username("admin")
-                .password("admin")
-                .grantType(OAuth2Constants.PASSWORD)
-                .build();
 
-        keycloak.realm(realm).users().get(userId).logout();
+    private String createUserInKeycloak(User user) {
+        Keycloak keycloak = getKeycloakAdminClient();
+
+        UserRepresentation keycloakUser = new UserRepresentation();
+        keycloakUser.setEnabled(false);
+        keycloakUser.setUsername(user.getEmail());
+        keycloakUser.setEmail(user.getEmail());
+        keycloakUser.setFirstName(user.getName());
+        keycloakUser.setLastName(user.getName());
+        keycloakUser.setEmailVerified(false);
+
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(user.getPassword());
+        credential.setTemporary(false);
+        keycloakUser.setCredentials(Collections.singletonList(credential));
+
+        // Create user in Keycloak
+        Response response = keycloak.realm(realm).users().create(keycloakUser);
+        if (response.getStatus() != 201) {
+            throw new RuntimeException("Failed to create user in Keycloak: " + response.getStatus());
+        }
+
+        String keycloakUserId = CreatedResponseUtil.getCreatedId(response);
+
+        // Assign role
+        RoleRepresentation role = keycloak.realm(realm).roles().get("customer").toRepresentation();
+        keycloak.realm(realm).users().get(keycloakUserId).roles().realmLevel().add(Collections.singletonList(role));
+
+        return keycloakUserId;
     }
-    public void createUserInKeycloak(User user) {
-        Keycloak keycloak = KeycloakBuilder.builder()
+    private Keycloak getKeycloakAdminClient() {
+        return  KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm("master")  // Use 'master' realm for admin access
                 .clientId("admin-cli")  // Use 'admin-cli' for admin-level actions
@@ -74,37 +93,24 @@ public class UserService implements IUserService {
                 .password("admin")  // Your Keycloak admin password
                 .grantType(OAuth2Constants.PASSWORD)
                 .build();
+    }
+    private void updateUserInKeycloak(User user) {
+        Keycloak keycloak = getKeycloakAdminClient();
+        UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
 
-        UserRepresentation keycloakUser = new UserRepresentation();
-        keycloakUser.setEnabled(true);
-        keycloakUser.setUsername(user.getEmail());
         keycloakUser.setEmail(user.getEmail());
+        keycloakUser.setUsername(user.getEmail());
         keycloakUser.setFirstName(user.getName());
         keycloakUser.setLastName(user.getName());
-        keycloakUser.setEmailVerified(true);
-
+        keycloakUser.setEnabled(user.isVerified());
+        keycloakUser.setEmailVerified(user.isVerified());
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
         credential.setValue(user.getPassword());
         credential.setTemporary(false);
         keycloakUser.setCredentials(Collections.singletonList(credential));
-        keycloakUser.setRequiredActions(new ArrayList<>());
-
-        // Create the user in Keycloak
-        Response response = keycloak.realm(realm).users().create(keycloakUser);
-        if (response.getStatus() != 201) {
-            throw new RuntimeException("Failed to create user in Keycloak: " + response.getStatus());
-        }
-
-        // Retrieve the newly created user's ID
-        String userId = CreatedResponseUtil.getCreatedId(response);
-
-        // Assign a role (e.g., "user" or "admin") to the created user
-        // Here, we're assigning a realm role named "user"
-        RoleRepresentation realmRole = keycloak.realm(realm).roles().get("customer").toRepresentation();
-        keycloak.realm(realm).users().get(userId).roles().realmLevel().add(Collections.singletonList(realmRole));
+        keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
     }
-
     private String uploadImageToCloud(MultipartFile image) throws IOException {
         Cloudinary cloudinary = getCloudinaryInstance();
         Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
@@ -118,37 +124,42 @@ public class UserService implements IUserService {
     }
     @Override
     public User signup(User user, MultipartFile image) throws IOException {
+        // Existing validations
         if (userRepository.findByEmail(user.getEmail()) != null) {
             throw new Exceptions.EmailAlreadyExists("L'email existe déjà.");
         }
         if (userRepository.existsById(user.getCin())) {
             throw new Exceptions.UserAlreadyExistsException("Un utilisateur avec ce CIN existe déjà.");
         }
-            if (image != null && !image.isEmpty()) {
-                String imageUrl = uploadImageToCloud(image);
-                user.setImage(imageUrl);
-            }
-          user.setUserRole(UserRole.CUSTOMER);
-            user.setCreationDate(LocalDateTime.now());
+
+        // Upload image
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = uploadImageToCloud(image);
+            user.setImage(imageUrl);
+        }
+
+        // Create user in Keycloak and get ID
+        String keycloakUserId = createUserInKeycloak(user);
+        user.setKeycloakId(keycloakUserId);
+
+        // Set user properties
+        user.setUserRole(UserRole.CUSTOMER);
+        user.setCreationDate(LocalDateTime.now());
         user.setVerified(false);
 
+        // Save to local database
         User savedUser = userRepository.save(user);
 
-        // Generate OTP
+        // Generate OTP and send email
         String otp = generateOtp();
-
-        // Create token with expiry (e.g., 15 minutes from now)
         VerificationToken token = new VerificationToken();
         token.setToken(otp);
         token.setUser(savedUser);
         token.setExpiryDate(LocalDateTime.now().plusMinutes(15));
         tokenRepository.save(token);
-        createUserInKeycloak( user);
-        // Send OTP email
         emailService.sendOtpEmail(savedUser.getEmail(), otp);
 
-       return userRepository.save(user);
-
+        return savedUser;
     }
     @Override
     public List<User> getAllUser() {
@@ -172,6 +183,7 @@ public class UserService implements IUserService {
             if (newUser.getImage() != null) {
                 existingUser.setImage(newUser.getImage());
             }
+            updateUserInKeycloak(existingUser); // Sync with Keycloak
 
             return userRepository.save(existingUser);
         } else {
@@ -182,26 +194,43 @@ public class UserService implements IUserService {
 
     @Override
     public String deleteUser(String cin) {
-        if (userRepository.findById(cin).isPresent()) {
-            userRepository.deleteById(cin);
-            return "utilisateur supprimé";
-        } else
-            return "utilisateur non supprimé";
-    }
+        User user = userRepository.findById(cin)
+                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
 
-    @Override
-    public User desactivateUser(String cin) {
-      User user = userRepository.findById(cin).orElse(null);
-        assert user != null;
-        user.setVerified(false);
-     return userRepository.save(user);
+        Keycloak keycloak = getKeycloakAdminClient();
+        keycloak.realm(realm).users().delete(user.getKeycloakId());
+
+        userRepository.delete(user);
+        return "utilisateur supprimé";
     }
 
     @Override
     public User activateUser(String cin) {
-        User user = userRepository.findById(cin).orElse(null);
-        assert user != null;
+        User user = userRepository.findById(cin)
+                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
         user.setVerified(true);
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        Keycloak keycloak = getKeycloakAdminClient();
+        UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
+        keycloakUser.setEnabled(true);
+        keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
+
+        return user;
+    }
+
+    @Override
+    public User desactivateUser(String cin) {
+        User user = userRepository.findById(cin)
+                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
+        user.setVerified(false);
+        userRepository.save(user);
+
+        Keycloak keycloak = getKeycloakAdminClient();
+        UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
+        keycloakUser.setEnabled(false);
+        keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
+
+        return user;
     }
 }

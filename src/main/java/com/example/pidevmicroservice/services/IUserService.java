@@ -14,5 +14,5 @@ public interface IUserService {
     public String deleteUser(String cin);
     public User desactivateUser(String cin);
     public User activateUser(String cin);
-  public void  logoutFromKeycloak(String userId);
+
 }
