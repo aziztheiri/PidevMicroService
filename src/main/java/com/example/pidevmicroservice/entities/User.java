@@ -30,5 +30,7 @@ public class User {
     private String image;
     private String location;
     private LocalDateTime creationDate;
+    private Integer age ;
+    private String gender;
 
 }

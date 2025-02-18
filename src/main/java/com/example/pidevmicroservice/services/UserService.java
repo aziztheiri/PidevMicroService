@@ -1,4 +1,5 @@
 package com.example.pidevmicroservice.services;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.*;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -104,11 +105,7 @@ public class UserService implements IUserService {
         keycloakUser.setLastName(user.getName());
         keycloakUser.setEnabled(user.isVerified());
         keycloakUser.setEmailVerified(user.isVerified());
-        CredentialRepresentation credential = new CredentialRepresentation();
-        credential.setType(CredentialRepresentation.PASSWORD);
-        credential.setValue(user.getPassword());
-        credential.setTemporary(false);
-        keycloakUser.setCredentials(Collections.singletonList(credential));
+
         keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
     }
     private String uploadImageToCloud(MultipartFile image) throws IOException {
@@ -137,6 +134,8 @@ public class UserService implements IUserService {
             String imageUrl = uploadImageToCloud(image);
             user.setImage(imageUrl);
         }
+        String rawPassword = user.getPassword();
+        String hashedPassword = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
 
         // Create user in Keycloak and get ID
         String keycloakUserId = createUserInKeycloak(user);
@@ -146,7 +145,7 @@ public class UserService implements IUserService {
         user.setUserRole(UserRole.CUSTOMER);
         user.setCreationDate(LocalDateTime.now());
         user.setVerified(false);
-
+        user.setPassword(hashedPassword);
         // Save to local database
         User savedUser = userRepository.save(user);
 
@@ -178,7 +177,8 @@ public class UserService implements IUserService {
             existingUser.setName(newUser.getName());
             existingUser.setEmail(newUser.getEmail());
             existingUser.setLocation(newUser.getLocation());
-            existingUser.setPassword(newUser.getPassword());
+            existingUser.setAge(newUser.getAge());
+            existingUser.setGender(newUser.getGender());
             // Only update the image if a new one is provided
             if (newUser.getImage() != null) {
                 existingUser.setImage(newUser.getImage());
