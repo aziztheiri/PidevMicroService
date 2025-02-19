@@ -1,10 +1,7 @@
 package com.example.pidevmicroservice.services;
 
 import com.example.pidevmicroservice.entities.Devis;
-import com.example.pidevmicroservice.repositories.DevisRepository;
-import com.example.pidevmicroservice.repositories.EcoleRepository;
-import com.example.pidevmicroservice.repositories.HabitationRepository;
-import com.example.pidevmicroservice.repositories.VoyageRepository;
+import com.example.pidevmicroservice.repositories.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,10 +14,14 @@ public class DevisServiceImpl implements IDevisService {
     private final EcoleRepository ecoleRepository;
     private final VoyageRepository voyageRepository;
     private final HabitationRepository habitationRepository;
+    private final AccidentsRepository accidentsRepository;
+    private final CapitalisationRepository capitalisationRepository;
+    private final PrevoyanceRepository prevoyanceRepository;
+    private final SanteInternationaleRepository santeInternationaleRepository;
 
     @Override
     public Devis addDevis(Devis devis) {
-        // Check if idAssurance is unique across Ecole, Voyage, and Habitation
+        // Check if idAssurance is unique across all tables
         if (!isIdUniqueAcrossTables(devis.getIdAssurance())) {
             throw new RuntimeException("ID already exists in another table");
         }
@@ -44,17 +45,21 @@ public class DevisServiceImpl implements IDevisService {
 
     @Override
     public Devis updateDevis(Devis devis) {
-        // Check if idAssurance is unique across Ecole, Voyage, and Habitation
+        // Check if idAssurance is unique across all tables
         if (!isIdUniqueAcrossTables(devis.getIdAssurance())) {
             throw new RuntimeException("ID already exists in another table");
         }
         return devisRepository.save(devis);
     }
 
-    // Helper method to check if ID is unique across Ecole, Voyage, and Habitation
+    // Helper method to check if ID is unique across all tables
     private boolean isIdUniqueAcrossTables(Long id) {
         return !ecoleRepository.existsById(id) &&
                 !voyageRepository.existsById(id) &&
-                !habitationRepository.existsById(id);
+                !habitationRepository.existsById(id) &&
+                !accidentsRepository.existsById(id) &&
+                !capitalisationRepository.existsById(id) &&
+                !prevoyanceRepository.existsById(id) &&
+                !santeInternationaleRepository.existsById(id);
     }
 }
