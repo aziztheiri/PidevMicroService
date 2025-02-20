@@ -1,7 +1,5 @@
 package com.example.pidevmicroservice.restcontrollers;
 
-
-
 import com.example.pidevmicroservice.entities.Reclamation;
 import com.example.pidevmicroservice.services.ReclamationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +28,8 @@ public class ReclamationController {
         return service.getReclamationById(id).orElseThrow(() -> new RuntimeException("Réclamation non trouvée"));
     }
 
-    @PutMapping("/{id}")
-    public Reclamation updateReclamation(@PathVariable Long id, @RequestBody Reclamation updatedReclamation) {
-        return service.updateReclamation(id, updatedReclamation);
-    }
-
     @DeleteMapping("/{id}")
     public void deleteReclamation(@PathVariable Long id) {
         service.deleteReclamation(id);
     }
 }
-

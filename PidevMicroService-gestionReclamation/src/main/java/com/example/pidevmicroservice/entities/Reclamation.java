@@ -14,6 +14,9 @@ public class Reclamation {
     private TypeReclamation type;
     private String statut;
 
+    @OneToOne(mappedBy = "reclamation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Reponse reponse;
+
     // Constructeurs
     public Reclamation() {}
 
@@ -63,5 +66,13 @@ public class Reclamation {
 
     public void setStatut(String statut) {
         this.statut = statut;
+    }
+
+    public Reponse getReponse() {
+        return reponse;
+    }
+
+    public void setReponse(Reponse reponse) {
+        this.reponse = reponse;
     }
 }

@@ -1,7 +1,5 @@
 package com.example.pidevmicroservice.services;
 
-
-
 import com.example.pidevmicroservice.entities.Reclamation;
 import com.example.pidevmicroservice.repositories.ReclamationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,4 +39,3 @@ public class ReclamationService {
         repository.deleteById(id);
     }
 }
-

@@ -5,6 +5,7 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/PidevMicroService-gestionAgence/pom.xml" />
+        <option value="$PROJECT_DIR$/PidevMicroService-gestionReclamation/pom.xml" />
       </list>
     </option>
   </component>
