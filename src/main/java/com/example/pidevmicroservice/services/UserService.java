@@ -25,8 +25,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,23 @@ public class UserService implements IUserService {
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final EmailService emailService;
+    private final InfobipSmsService infobipSmsService;
+    private static final int MAX_ATTEMPTS = 5;
+    private final Map<String, Integer> attemptsCache = new ConcurrentHashMap<>();
+    @Override
+    public void loginSucceeded(String username) {
+        attemptsCache.remove(username);
+    }
+    @Override
+    public void loginFailed(String username) {
+        int attempts = attemptsCache.getOrDefault(username, 0);
+        attempts++;
+        attemptsCache.put(username, attempts);
+    }
+    @Override
+    public boolean hasExceededMaxAttempts(String username) {
+        return attemptsCache.getOrDefault(username, 0) >= MAX_ATTEMPTS;
+    }
 
     @Value("${keycloak.auth-server-url}")
     private String keycloakUrl;
@@ -214,6 +234,7 @@ public class UserService implements IUserService {
         Keycloak keycloak = getKeycloakAdminClient();
         UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
         keycloakUser.setEnabled(true);
+        keycloakUser.setEmailVerified(true);
         keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
 
         return user;
@@ -225,10 +246,15 @@ public class UserService implements IUserService {
                 .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
         user.setVerified(false);
         userRepository.save(user);
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String message = String.format(
+                "Alert: Your account was deactivated on %s due to multiple failed login attempts. If this wasn't you, please contact support immediately.", today);
+        infobipSmsService.sendSms("+21694003834", message);
 
         Keycloak keycloak = getKeycloakAdminClient();
         UserRepresentation keycloakUser = keycloak.realm(realm).users().get(user.getKeycloakId()).toRepresentation();
         keycloakUser.setEnabled(false);
+
         keycloak.realm(realm).users().get(user.getKeycloakId()).update(keycloakUser);
 
         return user;

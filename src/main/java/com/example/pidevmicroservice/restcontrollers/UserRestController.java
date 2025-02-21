@@ -17,11 +17,15 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -39,8 +43,11 @@ public class UserRestController {
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final RestTemplate restTemplate;
+
     @Value("${keycloak.realm}")
     private String realm;
+    private String tokenUrl="http://localhost:8180/realms/pidev-realm/protocol/openid-connect/token";
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -48,6 +55,42 @@ public class UserRestController {
                 "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
         ));
     }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
+        // Prepare the form data for Keycloak
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", "pidev-client");
+        body.add("username", username);
+        body.add("password", password);
+        body.add("grant_type", "password");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
+            // Successful login: reset the failure counter
+            userService.loginSucceeded(username);
+            // Return the token response to the Angular client
+            return ResponseEntity.ok(response.getBody());
+        } catch (HttpClientErrorException e) {
+            // Increment the failed login attempt
+            userService.loginFailed(username);
+            // If the user has exceeded max attempts, deactivate the account
+            if(userRepository.findByEmail(username).isVerified() == true) {
+                if (userService.hasExceededMaxAttempts(username)) {
+                    userService.desactivateUser(userRepository.findByEmail(username).getCin());
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("Account has been deactivated due to multiple failed login attempts.");
+                }
+            }
+            // Return the error from Keycloak
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+            }
+
     private String uploadImageToCloud(MultipartFile image) throws IOException {
         Cloudinary cloudinary = getCloudinaryInstance();
         Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
@@ -173,6 +216,44 @@ public class UserRestController {
     public ResponseEntity<Object> updateUser(@PathVariable String cin,
                                         @RequestParam("user") String userJson,
                                         @RequestParam(value = "image", required = false) MultipartFile image) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            // Register the JavaTimeModule BEFORE deserialization!
+            mapper.registerModule(new JavaTimeModule());
+            // Optionally, disable writing dates as timestamps for a better format.
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            // Now deserialize the JSON string into a User object.
+            User user = mapper.readValue(userJson, User.class);
+
+            if (image != null && !image.isEmpty()) {
+                String imageUrl = uploadImageToCloud(image);
+                user.setImage(imageUrl); // Set the new image URL
+            }
+
+            User existingUser = userRepository.findById(cin).orElse(null);
+            if (existingUser == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Preserve the original creation date
+            user.setCreationDate(existingUser.getCreationDate());
+            User updatedUser = userService.updateUser(cin, user);
+
+            if (updatedUser != null) {
+                return ResponseEntity.ok(updatedUser);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user.");
+        }
+    }
+    @PutMapping("/user/{cin}")
+    public ResponseEntity<Object> updateNotAdminUser(@PathVariable String cin,
+                                             @RequestParam("user") String userJson,
+                                             @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             // Register the JavaTimeModule BEFORE deserialization!

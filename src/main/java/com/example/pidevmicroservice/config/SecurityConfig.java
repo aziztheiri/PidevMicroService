@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -61,12 +62,12 @@ public class SecurityConfig {
         http
                 .cors()
                 .and()
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2/**", "/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2/**", "/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**","/users/login/**"))
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**").permitAll()
+                        .requestMatchers("/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**","/users/login/**").permitAll()
                         .requestMatchers("/users/admin/**").hasRole("admin")
                         .requestMatchers("/users/user/**").hasRole("customer")
                         .anyRequest().authenticated()
@@ -93,5 +94,9 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

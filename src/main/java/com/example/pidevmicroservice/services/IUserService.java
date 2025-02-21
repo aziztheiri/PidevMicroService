@@ -14,5 +14,7 @@ public interface IUserService {
     public String deleteUser(String cin);
     public User desactivateUser(String cin);
     public User activateUser(String cin);
-
+    public void loginFailed(String username);
+    public void loginSucceeded(String username);
+    public boolean hasExceededMaxAttempts(String username);
 }
