@@ -28,53 +28,25 @@ import java.util.Map;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Create converters for both resource_access and realm_access roles
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            Collection<GrantedAuthority> authorities = new ArrayList<>();
-
-            // Extract roles from the nested resource_access -> pidev-client -> roles
-            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-            if (resourceAccess != null) {
-                Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get("pidev-client");
-                if (clientAccess != null && clientAccess.get("roles") instanceof Collection) {
-                    Collection<String> roles = (Collection<String>) clientAccess.get("roles");
-                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-                }
-            }
-
-            // Also extract roles from realm_access.roles if needed
-            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-            if (realmAccess != null) {
-                Object rolesObj = realmAccess.get("roles");
-                if (rolesObj instanceof Collection) {
-                    ((Collection<String>) rolesObj)
-                            .forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-                }
-            }
-
-            return authorities;
-        });
-
         http
                 .cors()
                 .and()
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2/**", "/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**","/users/login/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/h2/**",
+                        "/users/login",
+                        "/users/signup",
+                        "/users/verify",
+                        "/users/resend-otp"
+                )) // Exclude auth endpoints from CSRF protection
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/verify", "/users/resend-otp","/users/logout/**","/users/login/**").permitAll()
-                        .requestMatchers("/users/admin/**").hasRole("admin")
-                        .requestMatchers("/users/user/**").hasRole("customer")
-                        .anyRequest().authenticated()
+                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp").permitAll()
+                        .anyRequest().authenticated() // Protect other routes
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-                );
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt()); // Keep JWT validation for protected endpoints
 
         return http.build();
     }
@@ -84,17 +56,7 @@ public class SecurityConfig {
         return JwtDecoders.fromIssuerLocation("http://localhost:8180/realms/pidev-realm");
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

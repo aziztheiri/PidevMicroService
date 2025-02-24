@@ -36,7 +36,6 @@ import java.util.Random;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @RequestMapping("/users")
 public class UserRestController {
     private final IUserService userService;
