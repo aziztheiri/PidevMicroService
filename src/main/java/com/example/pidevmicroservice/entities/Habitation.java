@@ -2,7 +2,6 @@ package com.example.pidevmicroservice.entities;
 
 import com.example.pidevmicroservice.enums.Civilité;
 import com.example.pidevmicroservice.enums.PackHabitation;
-import com.example.pidevmicroservice.enums.TypePiece;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,8 +27,8 @@ public class Habitation {
 
     private String typePersonne; // Personne Physique ou Morale
 
-    @Enumerated(EnumType.STRING)
-    private TypePiece typePiece;
+
+    private String typePiece;
 
     private String numeroPiece;
     private String villePiece;

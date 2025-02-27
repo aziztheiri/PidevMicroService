@@ -2,7 +2,6 @@ package com.example.pidevmicroservice.entities;
 
 import com.example.pidevmicroservice.enums.PackEcole;
 import com.example.pidevmicroservice.enums.Role;
-import com.example.pidevmicroservice.enums.TypePiece;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,11 +19,11 @@ public class Ecole {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
 
-    @Enumerated(EnumType.STRING)
-    private TypePiece typePiece;
+    private String role;
+
+
+    private String typePiece;
 
     private String numeroPiece;
     private String nom;
@@ -50,8 +49,7 @@ public class Ecole {
 
     private Date dateEffet;
 
-    @Enumerated(EnumType.STRING)
-    private PackEcole pack;
+    private String pack;
 
     private String adresseParent;
     private String ville;

@@ -21,10 +21,6 @@ public class DevisServiceImpl implements IDevisService {
 
     @Override
     public Devis addDevis(Devis devis) {
-        // Check if idAssurance is unique across all tables
-        if (!isIdUniqueAcrossTables(devis.getIdAssurance())) {
-            throw new RuntimeException("ID already exists in another table");
-        }
         return devisRepository.save(devis);
     }
 
@@ -45,21 +41,8 @@ public class DevisServiceImpl implements IDevisService {
 
     @Override
     public Devis updateDevis(Devis devis) {
-        // Check if idAssurance is unique across all tables
-        if (!isIdUniqueAcrossTables(devis.getIdAssurance())) {
-            throw new RuntimeException("ID already exists in another table");
-        }
+
         return devisRepository.save(devis);
     }
 
-    // Helper method to check if ID is unique across all tables
-    private boolean isIdUniqueAcrossTables(Long id) {
-        return !ecoleRepository.existsById(id) &&
-                !voyageRepository.existsById(id) &&
-                !habitationRepository.existsById(id) &&
-                !accidentsRepository.existsById(id) &&
-                !capitalisationRepository.existsById(id) &&
-                !prevoyanceRepository.existsById(id) &&
-                !santeInternationaleRepository.existsById(id);
-    }
 }
