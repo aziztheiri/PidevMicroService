@@ -17,4 +17,5 @@ public interface IUserService {
     public void loginFailed(String username);
     public void loginSucceeded(String username);
     public boolean hasExceededMaxAttempts(String username);
+    public void updatePassword(String cin,String oldPassword,String newPassword);
 }

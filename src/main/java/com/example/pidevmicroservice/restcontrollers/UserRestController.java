@@ -3,6 +3,7 @@ package com.example.pidevmicroservice.restcontrollers;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.dto.OtpVerificationRequest;
+import com.example.pidevmicroservice.dto.PasswordUpdateRequest;
 import com.example.pidevmicroservice.entities.User;
 import com.example.pidevmicroservice.entities.VerificationToken;
 import com.example.pidevmicroservice.repositories.TokenRepository;
@@ -165,7 +166,6 @@ public class UserRestController {
                 token.getToken().equals(request.getOtp()) &&
                 token.getExpiryDate().isAfter(LocalDateTime.now())) {
             User user = token.getUser();
-
             user.setVerified(true);
             updateUserInKeycloak(user);
             userRepository.save(user);
@@ -303,5 +303,11 @@ public class UserRestController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> activateUser(@PathVariable(value = "cin") String cin){
         return new ResponseEntity<>(userService.activateUser(cin), HttpStatus.OK);
+    }
+    @PutMapping("/user/password/{cin}")
+    public ResponseEntity<?> updatePassword(@PathVariable("cin") String cin,
+                                            @RequestBody PasswordUpdateRequest request) {
+        userService.updatePassword(cin, request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.ok("Password updated successfully.");
     }
 }

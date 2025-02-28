@@ -259,4 +259,32 @@ public class UserService implements IUserService {
 
         return user;
     }
+    private void updatePasswordInKeycloak(User user, String newPassword) {
+        Keycloak keycloak = getKeycloakAdminClient();
+        CredentialRepresentation newCredential = new CredentialRepresentation();
+        newCredential.setType(CredentialRepresentation.PASSWORD);
+        newCredential.setValue(newPassword);
+        newCredential.setTemporary(false);
+        keycloak.realm(realm).users().get(user.getKeycloakId()).resetPassword(newCredential);
+    }
+    private boolean verifyOldPassword(User user, String oldPassword) {
+        return BCrypt.checkpw(oldPassword, user.getPassword());
+    }
+    @Override
+    public void updatePassword(String cin, String oldPassword, String newPassword) {
+        Optional<User> existingUserOpt = userRepository.findById(cin);
+        if (!existingUserOpt.isPresent()) {
+            throw new Exceptions.UserNotFoundException("User with CIN " + cin + " not found");
+        }
+        User existingUser = existingUserOpt.get();
+        if (!verifyOldPassword(existingUser, oldPassword)) {
+            throw new Exceptions.InvalidPasswordException("Old password is incorrect.");
+        }
+        updatePasswordInKeycloak(existingUser, newPassword);
+        String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        existingUser.setPassword(hashedNewPassword);
+        userRepository.save(existingUser);
+    }
+
+
 }

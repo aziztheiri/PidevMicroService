@@ -26,5 +26,10 @@ public class Exceptions {
             super(message, cause);
         }
     }
+    public static class InvalidPasswordException extends RuntimeException{
+        public InvalidPasswordException(String message){
+            super(message);
+        }
+    }
 
 }
