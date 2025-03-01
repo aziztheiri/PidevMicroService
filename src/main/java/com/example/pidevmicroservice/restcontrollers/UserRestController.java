@@ -2,6 +2,7 @@ package com.example.pidevmicroservice.restcontrollers;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.pidevmicroservice.dto.DeleteUserRequest;
 import com.example.pidevmicroservice.dto.OtpVerificationRequest;
 import com.example.pidevmicroservice.dto.PasswordUpdateRequest;
 import com.example.pidevmicroservice.entities.User;
@@ -9,7 +10,9 @@ import com.example.pidevmicroservice.entities.VerificationToken;
 import com.example.pidevmicroservice.repositories.TokenRepository;
 import com.example.pidevmicroservice.repositories.UserRepository;
 import com.example.pidevmicroservice.services.EmailService;
+import com.example.pidevmicroservice.services.Exceptions;
 import com.example.pidevmicroservice.services.IUserService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -18,6 +21,7 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -31,9 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class UserRestController {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final RestTemplate restTemplate;
+    private  static  String gemini = "AIzaSyAIG9UME50dL8NQpcMfCVQXXRZymWxBkRA";
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -310,4 +313,50 @@ public class UserRestController {
         userService.updatePassword(cin, request.getOldPassword(), request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
+    @PostMapping("/gemini-content")
+    public ResponseEntity<?> getGeminiContent() {
+        RestTemplate restTemplate = new RestTemplate();
+        String geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + gemini;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String requestBody = "{ \"contents\": [{ \"parts\": [{ \"text\": \"Provide me with today's key updates on the insurance industry in Tunisia and globally. Format the response in HTML using semantic markup (headings, paragraphs, and lists) for a clean presentation.And please do not include any comments or anything just title tunisia or global industry with information , all the thinking you do in background and irrelevant messages remove them\" }] }] }";
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(geminiApiUrl, HttpMethod.POST, request, String.class);
+
+            // Parse the response to extract text
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.getBody());
+            String text = root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+
+            // Return text as JSON object
+            Map<String, String> response1 = new HashMap<>();
+            response1.put("text", text);
+            return ResponseEntity.ok(response1); // Return JSO
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+    @PostMapping("/user/delete-user")
+    public ResponseEntity<?> deleteUser(@RequestBody DeleteUserRequest request) {
+        Optional<User> existingUserOpt = userRepository.findById(request.getCin());
+        if (!existingUserOpt.isPresent()) {
+            throw new Exceptions.UserNotFoundException("User with CIN " + request.getCin() + " not found");
+        }
+        User existingUser = existingUserOpt.get();
+        if (!BCrypt.checkpw(request.getOldPassword(), existingUser.getPassword())) {
+            throw new Exceptions.InvalidPasswordException("Old password is incorrect.");
+        }
+        Keycloak keycloak = getKeycloakAdminClient();
+        keycloak.realm(realm).users().delete(existingUser.getKeycloakId());
+        userRepository.delete(existingUser);
+        return ResponseEntity.ok("User deleted successfully.");
+    }
+
 }

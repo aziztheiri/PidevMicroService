@@ -31,19 +31,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors()
-                .and()
+                .cors(cors -> cors.disable())
                 .csrf(csrf -> csrf.ignoringRequestMatchers(
                         "/h2/**",
                         "/users/login",
                         "/users/signup",
+                        "/users/gemini-content/**",
                         "/users/verify",
                         "/users/resend-otp"
                 )) // Exclude auth endpoints from CSRF protection
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
-                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp").permitAll()
+                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**").permitAll()
                         .anyRequest().authenticated() // Protect other routes
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt()); // Keep JWT validation for protected endpoints
