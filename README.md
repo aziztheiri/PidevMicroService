@@ -24,7 +24,7 @@ Directory Structure
 /docs      # Documentation  
 Getting Started
 Clone the repository:
-git clone https://github.com/your-repo.git
+git clone https://github.com/aziztheiri/PidevMicroService.git
 Navigate to the backend folder and start the server:
 cd backend  
 mvn spring-boot:run
