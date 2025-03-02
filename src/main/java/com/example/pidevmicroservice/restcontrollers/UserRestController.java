@@ -5,8 +5,10 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.dto.DeleteUserRequest;
 import com.example.pidevmicroservice.dto.OtpVerificationRequest;
 import com.example.pidevmicroservice.dto.PasswordUpdateRequest;
+import com.example.pidevmicroservice.entities.PasswordResetToken;
 import com.example.pidevmicroservice.entities.User;
 import com.example.pidevmicroservice.entities.VerificationToken;
+import com.example.pidevmicroservice.repositories.PasswordResetTokenRepository;
 import com.example.pidevmicroservice.repositories.TokenRepository;
 import com.example.pidevmicroservice.repositories.UserRepository;
 import com.example.pidevmicroservice.services.EmailService;
@@ -22,9 +24,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -46,6 +46,7 @@ public class UserRestController {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final RestTemplate restTemplate;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private  static  String gemini = "AIzaSyAIG9UME50dL8NQpcMfCVQXXRZymWxBkRA";
 
     @Value("${keycloak.realm}")
@@ -344,7 +345,7 @@ public class UserRestController {
         }
     }
     @PostMapping("/user/delete-user")
-    public ResponseEntity<?> deleteUser(@RequestBody DeleteUserRequest request) {
+    public ResponseEntity<String> deleteUser(@RequestBody DeleteUserRequest request) {
         Optional<User> existingUserOpt = userRepository.findById(request.getCin());
         if (!existingUserOpt.isPresent()) {
             throw new Exceptions.UserNotFoundException("User with CIN " + request.getCin() + " not found");
@@ -358,5 +359,30 @@ public class UserRestController {
         userRepository.delete(existingUser);
         return ResponseEntity.ok("User deleted successfully.");
     }
-
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> processForgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        User user = userRepository.findByEmail(email);
+        String token = UUID.randomUUID().toString();
+        userService.createPasswordResetTokenForUser(user, token);
+        emailService.sendResetTokenEmail(user, token);
+        return ResponseEntity.ok("Reset password email sent");
+    }
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+        String tokenValidationResult = userService.validatePasswordResetToken(token);
+        if (tokenValidationResult != null) {
+            return ResponseEntity.badRequest().body(tokenValidationResult);
+        }
+       PasswordResetToken passToken = passwordResetTokenRepository.findByToken(token).orElse(null);
+        if (passToken == null) {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+        User user = passToken.getUser();
+        userService.changeUserPassword(user, newPassword);
+        passwordResetTokenRepository.delete(passToken);
+        return ResponseEntity.ok("Password reset successfully");
+    }
 }

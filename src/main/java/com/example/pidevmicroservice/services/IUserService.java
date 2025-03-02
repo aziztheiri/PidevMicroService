@@ -18,4 +18,7 @@ public interface IUserService {
     public void loginSucceeded(String username);
     public boolean hasExceededMaxAttempts(String username);
     public void updatePassword(String cin,String oldPassword,String newPassword);
+    public void changeUserPassword(User user,String newPassword);
+    public String validatePasswordResetToken(String token);
+    public void createPasswordResetTokenForUser(User user, String token);
 }

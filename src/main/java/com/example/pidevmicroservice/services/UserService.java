@@ -1,6 +1,7 @@
 package com.example.pidevmicroservice.services;
+import com.example.pidevmicroservice.entities.PasswordResetToken;
+import com.example.pidevmicroservice.repositories.PasswordResetTokenRepository;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.http.*;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.entities.User;
@@ -18,9 +19,6 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.core.Response;
@@ -38,8 +36,32 @@ public class UserService implements IUserService {
     private final TokenRepository tokenRepository;
     private final EmailService emailService;
     private final InfobipSmsService infobipSmsService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private static final int MAX_ATTEMPTS = 5;
     private final Map<String, Integer> attemptsCache = new ConcurrentHashMap<>();
+    @Override
+    public void createPasswordResetTokenForUser(User user, String token) {
+        PasswordResetToken myToken = new PasswordResetToken(token, user, LocalDateTime.now().plusHours(24)); // Token valid for 24 hours);
+        passwordResetTokenRepository.save(myToken);
+    }
+    @Override
+    public String validatePasswordResetToken(String token) {
+        Optional<PasswordResetToken> passToken = passwordResetTokenRepository.findByToken(token);
+        if (!passToken.isPresent()) {
+            return "invalidToken";
+        }
+        if (passToken.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+            return "expired";
+        }
+        return null; // valid token
+    }
+    @Override
+    public void changeUserPassword(User user,String newPassword){
+        updatePasswordInKeycloak(user, newPassword);
+        String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        user.setPassword(hashedNewPassword);
+        userRepository.save(user);
+    }
     @Override
     public void loginSucceeded(String username) {
         attemptsCache.remove(username);
@@ -54,7 +76,7 @@ public class UserService implements IUserService {
     public boolean hasExceededMaxAttempts(String username) {
         return attemptsCache.getOrDefault(username, 0) >= MAX_ATTEMPTS;
     }
-
+    private static String userNotfound="User not found!";
     @Value("${keycloak.auth-server-url}")
     private String keycloakUrl;
 
@@ -108,10 +130,10 @@ public class UserService implements IUserService {
     private Keycloak getKeycloakAdminClient() {
         return  KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
-                .realm("master")  // Use 'master' realm for admin access
-                .clientId("admin-cli")  // Use 'admin-cli' for admin-level actions
-                .username("admin")  // Your Keycloak admin username
-                .password("admin")  // Your Keycloak admin password
+                .realm("master")  
+                .clientId("admin-cli")
+                .username("admin")
+                .password("admin")
                 .grantType(OAuth2Constants.PASSWORD)
                 .build();
     }
@@ -215,7 +237,7 @@ public class UserService implements IUserService {
     @Override
     public String deleteUser(String cin) {
         User user = userRepository.findById(cin)
-                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
+                .orElseThrow(() -> new Exceptions.UserNotFoundException(userNotfound));
 
         Keycloak keycloak = getKeycloakAdminClient();
         keycloak.realm(realm).users().delete(user.getKeycloakId());
@@ -227,7 +249,7 @@ public class UserService implements IUserService {
     @Override
     public User activateUser(String cin) {
         User user = userRepository.findById(cin)
-                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
+                .orElseThrow(() -> new Exceptions.UserNotFoundException(userNotfound));
         user.setVerified(true);
         userRepository.save(user);
 
@@ -243,7 +265,7 @@ public class UserService implements IUserService {
     @Override
     public User desactivateUser(String cin) {
         User user = userRepository.findById(cin)
-                .orElseThrow(() -> new Exceptions.UserNotFoundException("User not found"));
+                .orElseThrow(() -> new Exceptions.UserNotFoundException(userNotfound));
         user.setVerified(false);
         userRepository.save(user);
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));

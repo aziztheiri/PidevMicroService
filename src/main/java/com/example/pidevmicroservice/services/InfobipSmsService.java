@@ -1,6 +1,7 @@
 package com.example.pidevmicroservice.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class InfobipSmsService {
 
@@ -47,10 +49,10 @@ public class InfobipSmsService {
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             // You can log or process the response if needed
-            System.out.println("SMS sent successfully: " + response.getBody());
+            log.info("SMS sent successfully: " + response.getBody());
         } catch (Exception ex) {
             // Log the exception; do not block main flow if sending SMS is not critical
-            System.err.println("Error sending SMS: " + ex.getMessage());
+            log.info("Error sending SMS: " + ex.getMessage());
         }
     }
 }
