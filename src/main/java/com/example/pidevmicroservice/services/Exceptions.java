@@ -31,5 +31,10 @@ public class Exceptions {
             super(message);
         }
     }
+    public static class FailedKeycloakError extends RuntimeException{
+        public FailedKeycloakError(String message){
+            super(message);
+        }
+    }
 
 }

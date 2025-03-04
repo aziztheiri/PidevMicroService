@@ -2,9 +2,11 @@ package com.example.pidevmicroservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,13 +31,14 @@ public class SecurityConfig {
                         "/users/forgot-password",
                         "/users/reset-password"
                 )) // Exclude auth endpoints from CSRF protection
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
                         .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**","/users/forgot-password","/users/reset-password").permitAll()
                         .anyRequest().authenticated() // Protect other routes
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt()); // Keep JWT validation for protected endpoints
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        // Keep JWT validation for protected endpoints
 
         return http.build();
     }

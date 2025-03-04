@@ -25,6 +25,7 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -47,10 +48,12 @@ public class UserRestController {
     private final EmailService emailService;
     private final RestTemplate restTemplate;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private  static  String gemini = "AIzaSyAIG9UME50dL8NQpcMfCVQXXRZymWxBkRA";
+    @Value("${geminiKey}")
+    private  String gemini ;
 
     @Value("${keycloak.realm}")
     private String realm;
+    private String adminPass="admin";
     private String tokenUrl="http://localhost:8180/realms/pidev-realm/protocol/openid-connect/token";
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
@@ -60,7 +63,7 @@ public class UserRestController {
         ));
     }
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<Object> login(@RequestParam String username, @RequestParam String password) {
         // Prepare the form data for Keycloak
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", "pidev-client");
@@ -74,26 +77,30 @@ public class UserRestController {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
-            // Successful login: reset the failure counter
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    tokenUrl,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
             userService.loginSucceeded(username);
             // Return the token response to the Angular client
             return ResponseEntity.ok(response.getBody());
         } catch (HttpClientErrorException e) {
             // Increment the failed login attempt
             userService.loginFailed(username);
-            // If the user has exceeded max attempts, deactivate the account
-            if(userRepository.findByEmail(username).isVerified() == true) {
-                if (userService.hasExceededMaxAttempts(username)) {
-                    userService.desactivateUser(userRepository.findByEmail(username).getCin());
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body("Account has been deactivated due to multiple failed login attempts.");
-                }
+            // Retrieve user once and check both conditions together
+            User user = userRepository.findByEmail(username);
+            if (user.isVerified() && userService.hasExceededMaxAttempts(username)) {
+                userService.desactivateUser(user.getCin());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Account has been deactivated due to multiple failed login attempts.");
             }
             // Return the error from Keycloak
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
-            }
+    }
+
 
     private String uploadImageToCloud(MultipartFile image) throws IOException {
         Cloudinary cloudinary = getCloudinaryInstance();
@@ -147,7 +154,7 @@ public class UserRestController {
                 .realm("master")  // Use 'master' realm for admin access
                 .clientId("admin-cli")  // Use 'admin-cli' for admin-level actions
                 .username("admin")  // Your Keycloak admin username
-                .password("admin")  // Your Keycloak admin password
+                .password(adminPass)  // Your Keycloak admin password
                 .grantType(OAuth2Constants.PASSWORD)
                 .build();
     }
@@ -309,14 +316,13 @@ public class UserRestController {
         return new ResponseEntity<>(userService.activateUser(cin), HttpStatus.OK);
     }
     @PutMapping("/user/password/{cin}")
-    public ResponseEntity<?> updatePassword(@PathVariable("cin") String cin,
+    public ResponseEntity<String> updatePassword(@PathVariable("cin") String cin,
                                             @RequestBody PasswordUpdateRequest request) {
         userService.updatePassword(cin, request.getOldPassword(), request.getNewPassword());
         return ResponseEntity.ok("Password updated successfully.");
     }
     @PostMapping("/gemini-content")
-    public ResponseEntity<?> getGeminiContent() {
-        RestTemplate restTemplate = new RestTemplate();
+    public ResponseEntity<Object> getGeminiContent() {
         String geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + gemini;
 
         HttpHeaders headers = new HttpHeaders();
@@ -360,7 +366,7 @@ public class UserRestController {
         return ResponseEntity.ok("User deleted successfully.");
     }
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> processForgotPassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<String> processForgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         User user = userRepository.findByEmail(email);
         String token = UUID.randomUUID().toString();
@@ -369,7 +375,7 @@ public class UserRestController {
         return ResponseEntity.ok("Reset password email sent");
     }
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         String newPassword = request.get("newPassword");
         String tokenValidationResult = userService.validatePasswordResetToken(token);

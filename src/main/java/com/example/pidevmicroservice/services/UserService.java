@@ -41,7 +41,7 @@ public class UserService implements IUserService {
     private final Map<String, Integer> attemptsCache = new ConcurrentHashMap<>();
     @Override
     public void createPasswordResetTokenForUser(User user, String token) {
-        PasswordResetToken myToken = new PasswordResetToken(token, user, LocalDateTime.now().plusHours(24)); // Token valid for 24 hours);
+        PasswordResetToken myToken = new PasswordResetToken(token, user, LocalDateTime.now().plusHours(24));
         passwordResetTokenRepository.save(myToken);
     }
     @Override
@@ -88,6 +88,7 @@ public class UserService implements IUserService {
 
     @Value("${keycloak.admin-client-secret}")
     private String adminClientSecret;
+    private String adminPass="admin";
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -116,7 +117,7 @@ public class UserService implements IUserService {
         // Create user in Keycloak
         Response response = keycloak.realm(realm).users().create(keycloakUser);
         if (response.getStatus() != 201) {
-            throw new RuntimeException("Failed to create user in Keycloak: " + response.getStatus());
+            throw new Exceptions.FailedKeycloakError("Failed to create user in Keycloak: " + response.getStatus());
         }
 
         String keycloakUserId = CreatedResponseUtil.getCreatedId(response);
@@ -133,7 +134,7 @@ public class UserService implements IUserService {
                 .realm("master")  
                 .clientId("admin-cli")
                 .username("admin")
-                .password("admin")
+                .password(adminPass)
                 .grantType(OAuth2Constants.PASSWORD)
                 .build();
     }
