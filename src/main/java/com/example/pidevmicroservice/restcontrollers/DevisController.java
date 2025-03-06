@@ -1,6 +1,7 @@
 package com.example.pidevmicroservice.restcontrollers;
 
 import com.example.pidevmicroservice.entities.Devis;
+import com.example.pidevmicroservice.enums.StatutDevis;
 import com.example.pidevmicroservice.services.IDevisService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -37,5 +38,18 @@ public class DevisController {
     @PutMapping
     public Devis updateDevis(@RequestBody Devis devis) {
         return devisService.updateDevis(devis);
+    }
+
+    // New endpoint to update the status of a devis
+    @PatchMapping("/{id}/statut")
+    public Devis updateDevisStatus(@PathVariable Long id, @RequestParam String statut) {
+        // Convert the String to StatutDevis enum
+        StatutDevis statutDevis = StatutDevis.valueOf(statut.toUpperCase());
+        return devisService.updateDevisStatus(id, statutDevis);
+    }
+
+    @GetMapping("/cin/{cin}")
+    public List<Devis> getDevisByCin(@PathVariable String cin) {
+        return devisService.getDevisByCin(cin);
     }
 }

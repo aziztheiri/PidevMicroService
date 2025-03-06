@@ -1,6 +1,7 @@
 package com.example.pidevmicroservice.services;
 
 import com.example.pidevmicroservice.entities.Devis;
+import com.example.pidevmicroservice.enums.StatutDevis;
 import com.example.pidevmicroservice.repositories.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,20 @@ public class DevisServiceImpl implements IDevisService {
     public Devis updateDevis(Devis devis) {
 
         return devisRepository.save(devis);
+    }
+    @Override
+    public Devis updateDevisStatus(Long id, StatutDevis statut) {
+        Devis devis = devisRepository.findById(id).orElse(null);
+        if (devis != null) {
+            devis.setStatut(statut); // Update the statut field
+            return devisRepository.save(devis);
+        }
+        return null; // Or throw an exception if the devis is not found
+    }
+
+    @Override
+    public List<Devis> getDevisByCin(String cin) {
+        return devisRepository.findByCin(cin); // Implement the new method
     }
 
 }

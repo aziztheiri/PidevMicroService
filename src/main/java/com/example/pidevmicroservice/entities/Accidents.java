@@ -17,12 +17,12 @@ public class Accidents {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private Profession profession;
+
+    private String profession;
 
     private int capitalDeces;
     private int capitalIPP;
-    private double montantRenteParJourDT;
+    private int montantRenteParJourDT;
     private String dureeFranchise;
     private int capitalTraitement;
     private String nom;

@@ -18,6 +18,9 @@ public class Devis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String cin;
+
+
     private Double montant;
 
     private Date dateCalcul;
@@ -25,7 +28,7 @@ public class Devis {
     @Enumerated(EnumType.STRING)
     private TypeAssurance typeAssurance;
 
-    private Long idAssurance; // Can be Ecole, Voyage, or Habitation ID
+    private Long idAssurance;
 
     @Enumerated(EnumType.STRING)
     private StatutDevis statut;

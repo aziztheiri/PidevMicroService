@@ -21,7 +21,7 @@ public class Capitalisation {
     private int capitalInitial;
     private int versementRegulier;
     private String frequence;
-    private boolean primeVariable;
+    private String primeVariable;
     private String nom;
     private String prenom;
     private String mail;
