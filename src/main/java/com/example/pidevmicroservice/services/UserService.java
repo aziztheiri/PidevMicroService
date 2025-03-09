@@ -37,6 +37,7 @@ public class UserService implements IUserService {
     private final EmailService emailService;
     private final InfobipSmsService infobipSmsService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+
     private static final int MAX_ATTEMPTS = 5;
     private final Map<String, Integer> attemptsCache = new ConcurrentHashMap<>();
     @Override

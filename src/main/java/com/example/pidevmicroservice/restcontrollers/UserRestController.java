@@ -50,11 +50,11 @@ public class UserRestController {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     @Value("${geminiKey}")
     private  String gemini ;
-
+    @Value("${keycloak.auth-server-url}")
+    private String keycloakUrl;
     @Value("${keycloak.realm}")
     private String realm;
     private String adminPass="admin";
-    private String tokenUrl="http://localhost:8180/realms/pidev-realm/protocol/openid-connect/token";
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -62,8 +62,13 @@ public class UserRestController {
                 "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
         ));
     }
+    @GetMapping("/find/{cin}")
+    public User getUserByCin(@PathVariable String cin){
+        return userRepository.findById(cin).orElse(null);
+    }
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestParam String username, @RequestParam String password) {
+        String tokenUrl=keycloakUrl+"/realms/pidev-realm/protocol/openid-connect/token";
         // Prepare the form data for Keycloak
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", "pidev-client");
@@ -150,7 +155,7 @@ public class UserRestController {
     }
     private Keycloak getKeycloakAdminClient() {
         return  KeycloakBuilder.builder()
-                .serverUrl("http://localhost:8180")
+                .serverUrl(keycloakUrl)
                 .realm("master")  // Use 'master' realm for admin access
                 .clientId("admin-cli")  // Use 'admin-cli' for admin-level actions
                 .username("admin")  // Your Keycloak admin username

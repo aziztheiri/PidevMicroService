@@ -1,5 +1,6 @@
 package com.example.pidevmicroservice.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,6 +18,8 @@ import org.springframework.web.client.RestTemplate;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    @Value("${keycloak.auth-server-url}")
+    private String keycloakUrl;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -29,12 +32,13 @@ public class SecurityConfig {
                         "/users/verify",
                         "/users/resend-otp",
                         "/users/forgot-password",
-                        "/users/reset-password"
+                        "/users/reset-password",
+                        "/users/find/**"
                 )) // Exclude auth endpoints from CSRF protection
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
-                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**","/users/forgot-password","/users/reset-password").permitAll()
+                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**","/users/forgot-password","/users/reset-password","/users/find/**").permitAll()
                         .anyRequest().authenticated() // Protect other routes
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
@@ -45,7 +49,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return JwtDecoders.fromIssuerLocation("http://localhost:8180/realms/pidev-realm");
+        return JwtDecoders.fromIssuerLocation(keycloakUrl+"/realms/pidev-realm");
     }
 
 
