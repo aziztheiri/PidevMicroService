@@ -18,6 +18,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -128,6 +129,14 @@ public class UserService implements IUserService {
         keycloak.realm(realm).users().get(keycloakUserId).roles().realmLevel().add(Collections.singletonList(role));
 
         return keycloakUserId;
+    }
+    //@Scheduled(cron = "0/10 * * * * ?")
+    @Scheduled(cron = "0 0 0 1 1 ?")
+    public void sendRenewalNotifications() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            emailService.sendRenewalReminderEmail(user.getEmail());
+        }
     }
     private Keycloak getKeycloakAdminClient() {
         return  KeycloakBuilder.builder()

@@ -33,12 +33,14 @@ public class SecurityConfig {
                         "/users/resend-otp",
                         "/users/forgot-password",
                         "/users/reset-password",
-                        "/users/find/**"
+                        "/users/find/**",
+                        "/users/run-report"
                 )) // Exclude auth endpoints from CSRF protection
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2/**").permitAll()
-                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**","/users/forgot-password","/users/reset-password","/users/find/**").permitAll()
+                        .requestMatchers("/users/login", "/users/signup", "/users/verify", "/users/resend-otp","/users/gemini-content/**","/users/forgot-password","/users/reset-password","/users/find/**",
+                                "/users/run-report").permitAll()
                         .anyRequest().authenticated() // Protect other routes
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));

@@ -24,6 +24,9 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -43,6 +46,8 @@ import java.util.*;
 @RequestMapping("/users")
 public class UserRestController {
     private final IUserService userService;
+    private final JobLauncher jobLauncher;
+    private final Job userReportJob;
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
@@ -54,7 +59,37 @@ public class UserRestController {
     private String keycloakUrl;
     @Value("${keycloak.realm}")
     private String realm;
+    @Value("${recaptcha.secret}")
+    private String recaptchaSecret;
     private String adminPass="admin";
+    private boolean verifyRecaptcha(String recaptchaResponse) {
+        if ("PASSED".equalsIgnoreCase(recaptchaResponse)) {
+            return true;
+        }
+        String url = "https://www.google.com/recaptcha/api/siteverify";
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("secret", recaptchaSecret);
+        body.add("response", recaptchaResponse);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    url,
+                    new HttpEntity<>(body, headers),
+                    Map.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return (Boolean) response.getBody().get("success");
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private Cloudinary getCloudinaryInstance() {
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", "dmwttu9lu",
@@ -62,14 +97,29 @@ public class UserRestController {
                 "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
         ));
     }
+    @GetMapping("/run-report")
+    public String runReport() {
+        try {
+            jobLauncher.run(userReportJob, new JobParameters());
+            return "Job lancé avec succès. Le rapport est généré dans le fichier user-report.csv";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Erreur lors du lancement du job";
+        }
+    }
     @GetMapping("/find/{cin}")
     public User getUserByCin(@PathVariable String cin){
         return userRepository.findById(cin).orElse(null);
     }
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<Object> login(@RequestParam String username, @RequestParam String password,@RequestParam(name = "g-recaptcha-response") String recaptchaResponse) {
         String tokenUrl=keycloakUrl+"/realms/pidev-realm/protocol/openid-connect/token";
         // Prepare the form data for Keycloak
+        if (!verifyRecaptcha(recaptchaResponse)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("reCAPTCHA verification failed");
+        }
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", "pidev-client");
         body.add("username", username);

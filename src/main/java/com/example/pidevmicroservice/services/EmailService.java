@@ -34,6 +34,14 @@ public class EmailService {
         mailSender.send(message);
     }
     @Async
+    public void sendRenewalReminderEmail(String to) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Renouvelez votre assurance");
+        message.setText("Cher(e) client(e),\n\nVotre assurance arrive à échéance. Veuillez la renouveler avant la date limite pour continuer à bénéficier de nos services.\n\nCordialement,\nVotre compagnie d'assurance");
+        mailSender.send(message);
+    }
+    @Async
     public void sendResetTokenEmail(User user, String token) {
         String resetUrl = "http://localhost:4200/reset-password?token=" + token;
         SimpleMailMessage email = new SimpleMailMessage();
