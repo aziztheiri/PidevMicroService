@@ -22,7 +22,14 @@ public class UserItemProcessor implements ItemProcessor<User, UserReportDTO> {
                 user.isVerified(),
                 creationDate,
                 user.getAge(),
-                user.getGender()
+                user.getGender(),
+                user.getMonthsSinceLastClaim(),
+                user.getTotalClaimAmount(),
+                user.getMonthlyPremiumAuto(),
+                user.getCustomerLifetimeValue(),
+                user.getVehicleClassLuxuryCar(),
+                user.getEmploymentStatusEmployed(),
+                user.getLocationCodeSuburban()
         );
     }
 }

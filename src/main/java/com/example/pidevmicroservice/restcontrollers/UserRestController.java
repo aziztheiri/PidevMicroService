@@ -26,6 +26,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -100,7 +101,11 @@ public class UserRestController {
     @GetMapping("/run-report")
     public String runReport() {
         try {
-            jobLauncher.run(userReportJob, new JobParameters());
+            JobParameters jobParameters = new JobParametersBuilder()
+                    .addLong("timestamp", System.currentTimeMillis())
+                    .toJobParameters();
+
+            jobLauncher.run(userReportJob, jobParameters);
             return "Job lancé avec succès. Le rapport est généré dans le fichier user-report.csv";
         } catch (Exception e) {
             e.printStackTrace();

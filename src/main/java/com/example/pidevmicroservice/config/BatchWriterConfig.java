@@ -22,7 +22,9 @@ public class BatchWriterConfig {
 
         BeanWrapperFieldExtractor<UserReportDTO> fieldExtractor = new BeanWrapperFieldExtractor<>();
         fieldExtractor.setNames(new String[] {
-                "cin", "email", "name", "userRole", "isVerified", "creationDate", "age", "gender"
+                "cin", "email", "name", "userRole", "isVerified", "creationDate", "age", "gender",
+                "monthsSinceLastClaim", "totalClaimAmount", "monthlyPremiumAuto", "customerLifetimeValue",
+                "vehicleClassLuxuryCar", "employmentStatusEmployed", "locationCodeSuburban"
         });
         lineAggregator.setFieldExtractor(fieldExtractor);
 

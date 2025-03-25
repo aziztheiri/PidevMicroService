@@ -201,6 +201,13 @@ public class UserService implements IUserService {
         user.setCreationDate(LocalDateTime.now());
         user.setVerified(false);
         user.setPassword(hashedPassword);
+        user.setMonthsSinceLastClaim(1L);
+        user.setTotalClaimAmount(3000.0);
+        user.setMonthlyPremiumAuto(250L);
+        user.setCustomerLifetimeValue(50000.0);
+        user.setVehicleClassLuxuryCar(1);
+        user.setEmploymentStatusEmployed(1);
+        user.setLocationCodeSuburban(0);
         // Save to local database
         User savedUser = userRepository.save(user);
 

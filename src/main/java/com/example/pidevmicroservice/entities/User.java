@@ -32,5 +32,24 @@ public class User {
     private LocalDateTime creationDate;
     private Integer age ;
     private String gender;
+    @Column(name = "months_since_last_claim")
+    private Long monthsSinceLastClaim;
 
+    @Column(name = "total_claim_amount")
+    private Double totalClaimAmount;
+
+    @Column(name = "monthly_premium_auto")
+    private Long monthlyPremiumAuto;
+
+    @Column(name = "customer_lifetime_value")
+    private Double customerLifetimeValue;
+
+    @Column(name = "vehicle_class_luxury_car")
+    private Integer vehicleClassLuxuryCar;
+
+    @Column(name = "employment_status_employed")
+    private Integer employmentStatusEmployed;
+
+    @Column(name = "location_code_suburban")
+    private Integer locationCodeSuburban;
 }

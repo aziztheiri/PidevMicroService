@@ -1012,3 +1012,143 @@ Database is already closed (to disable automatic closing at VM shutdown, add ";D
 	at org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer$AsyncMessageProcessingConsumer.mainLoop(SimpleMessageListenerContainer.java:1421)
 	at org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer$AsyncMessageProcessingConsumer.run(SimpleMessageListenerContainer.java:1322)
 	at java.base/java.lang.Thread.run(Thread.java:840)
+2025-03-25 13:05:46.083012+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "UPDATE Utilisateur u\000d\000a[*]JOIN (\000d\000a    SELECT cin, FLOOR(1 + RAND() * 3) AS random_set\000d\000a    FROM Utilisateur\000d\000a) AS sub ON u.cin = sub.cin\000d\000aSET\000d\000a    u.months_since_last_claim = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 12\000d\000a        WHEN 3 THEN 36\000d\000a    END,\000d\000a    u.total_claim_amount = CASE sub.random_set\000d\000a        WHEN 1 THEN 3000\000d\000a        WHEN 2 THEN 138.130879\000d\000a        WHEN 3 THEN 150\000d\000a    END,\000d\000a    u.monthly_premium_auto = CASE sub.random_set\000d\000a        WHEN 1 THEN 250\000d\000a        WHEN 2 THEN 73\000d\000a        WHEN 3 THEN 60\000d\000a    END,\000d\000a    u.customer_lifetime_value = CASE sub.random_set\000d\000a        WHEN 1 THEN 50000\000d\000a        WHEN 2 THEN 2813.692575\000d\000a        WHEN 3 THEN 10000\000d\000a    END,\000d\000a    u.vehicle_class_luxury_car = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 0\000d\000a        WHEN 3 THEN 0\000d\000a    END,\000d\000a    u.employment_status_employed = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 1\000d\000a        WHEN 3 THEN 0\000d\000a    END,\000d\000a    u.location_code_suburban = CASE sub.random_set\000d\000a        WHEN 1 THEN 0\000d\000a        WHEN 2 THEN 0\000d\000a        WHEN 3 THEN 1\000d\000a    END"; attendu "SET"
+Syntax error in SQL statement "UPDATE Utilisateur u\000d\000a[*]JOIN (\000d\000a    SELECT cin, FLOOR(1 + RAND() * 3) AS random_set\000d\000a    FROM Utilisateur\000d\000a) AS sub ON u.cin = sub.cin\000d\000aSET\000d\000a    u.months_since_last_claim = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 12\000d\000a        WHEN 3 THEN 36\000d\000a    END,\000d\000a    u.total_claim_amount = CASE sub.random_set\000d\000a        WHEN 1 THEN 3000\000d\000a        WHEN 2 THEN 138.130879\000d\000a        WHEN 3 THEN 150\000d\000a    END,\000d\000a    u.monthly_premium_auto = CASE sub.random_set\000d\000a        WHEN 1 THEN 250\000d\000a        WHEN 2 THEN 73\000d\000a        WHEN 3 THEN 60\000d\000a    END,\000d\000a    u.customer_lifetime_value = CASE sub.random_set\000d\000a        WHEN 1 THEN 50000\000d\000a        WHEN 2 THEN 2813.692575\000d\000a        WHEN 3 THEN 10000\000d\000a    END,\000d\000a    u.vehicle_class_luxury_car = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 0\000d\000a        WHEN 3 THEN 0\000d\000a    END,\000d\000a    u.employment_status_employed = CASE sub.random_set\000d\000a        WHEN 1 THEN 1\000d\000a        WHEN 2 THEN 1\000d\000a        WHEN 3 THEN 0\000d\000a    END,\000d\000a    u.location_code_suburban = CASE sub.random_set\000d\000a        WHEN 1 THEN 0\000d\000a        WHEN 2 THEN 0\000d\000a        WHEN 3 THEN 1\000d\000a    END"; expected "SET"; SQL statement:
+UPDATE Utilisateur u
+JOIN (
+    SELECT cin, FLOOR(1 + RAND() * 3) AS random_set
+    FROM Utilisateur
+) AS sub ON u.cin = sub.cin
+SET
+    u.months_since_last_claim = CASE sub.random_set
+        WHEN 1 THEN 1
+        WHEN 2 THEN 12
+        WHEN 3 THEN 36
+    END,
+    u.total_claim_amount = CASE sub.random_set
+        WHEN 1 THEN 3000
+        WHEN 2 THEN 138.130879
+        WHEN 3 THEN 150
+    END,
+    u.monthly_premium_auto = CASE sub.random_set
+        WHEN 1 THEN 250
+        WHEN 2 THEN 73
+        WHEN 3 THEN 60
+    END,
+    u.customer_lifetime_value = CASE sub.random_set
+        WHEN 1 THEN 50000
+        WHEN 2 THEN 2813.692575
+        WHEN 3 THEN 10000
+    END,
+    u.vehicle_class_luxury_car = CASE sub.random_set
+        WHEN 1 THEN 1
+        WHEN 2 THEN 0
+        WHEN 3 THEN 0
+    END,
+    u.employment_status_employed = CASE sub.random_set
+        WHEN 1 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 0
+    END,
+    u.location_code_suburban = CASE sub.random_set
+        WHEN 1 THEN 0
+        WHEN 2 THEN 0
+        WHEN 3 THEN 1
+    END [42001-224]
+2025-03-25 13:10:09.993738+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "UPDATE UTILISATEUR\000d\000aSET \000d\000a    MONTHS_SINCE_LAST_CLAIM = CASE \000d\000a        WHEN idx = 0 THEN 1\000d\000a        WHEN idx = 1 THEN 12\000d\000a        WHEN idx = 2 THEN 36\000d\000a    END,\000d\000a    TOTAL_CLAIM_AMOUNT = CASE \000d\000a        WHEN idx = 0 THEN 3000\000d\000a        WHEN idx = 1 THEN 138.130879\000d\000a        WHEN idx = 2 THEN 150\000d\000a    END,\000d\000a    MONTHLY_PREMIUM_AUTO = CASE \000d\000a        WHEN idx = 0 THEN 250\000d\000a        WHEN idx = 1 THEN 73\000d\000a        WHEN idx = 2 THEN 60\000d\000a    END,\000d\000a    CUSTOMER_LIFETIME_VALUE = CASE \000d\000a        WHEN idx = 0 THEN 50000\000d\000a        WHEN idx = 1 THEN 2813.692575\000d\000a        WHEN idx = 2 THEN 10000\000d\000a    END,\000d\000a    VEHICLE_CLASS_LUXURY_CAR = CASE \000d\000a        WHEN idx = 0 THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    EMPLOYMENT_STATUS_EMPLOYED = CASE \000d\000a        WHEN idx IN (0, 1) THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    LOCATION_CODE_SUBURBAN = CASE \000d\000a        WHEN idx = 2 THEN 1\000d\000a        ELSE 0\000d\000a    END\000d\000a[*]FROM (\000d\000a    SELECT \000d\000a        CIN, \000d\000a        FLOOR(RAND() * 3) AS idx \000d\000a    FROM votre_table\000d\000a) AS random_values\000d\000aWHERE votre_table.CIN = random_values.CIN"
+Syntax error in SQL statement "UPDATE UTILISATEUR\000d\000aSET \000d\000a    MONTHS_SINCE_LAST_CLAIM = CASE \000d\000a        WHEN idx = 0 THEN 1\000d\000a        WHEN idx = 1 THEN 12\000d\000a        WHEN idx = 2 THEN 36\000d\000a    END,\000d\000a    TOTAL_CLAIM_AMOUNT = CASE \000d\000a        WHEN idx = 0 THEN 3000\000d\000a        WHEN idx = 1 THEN 138.130879\000d\000a        WHEN idx = 2 THEN 150\000d\000a    END,\000d\000a    MONTHLY_PREMIUM_AUTO = CASE \000d\000a        WHEN idx = 0 THEN 250\000d\000a        WHEN idx = 1 THEN 73\000d\000a        WHEN idx = 2 THEN 60\000d\000a    END,\000d\000a    CUSTOMER_LIFETIME_VALUE = CASE \000d\000a        WHEN idx = 0 THEN 50000\000d\000a        WHEN idx = 1 THEN 2813.692575\000d\000a        WHEN idx = 2 THEN 10000\000d\000a    END,\000d\000a    VEHICLE_CLASS_LUXURY_CAR = CASE \000d\000a        WHEN idx = 0 THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    EMPLOYMENT_STATUS_EMPLOYED = CASE \000d\000a        WHEN idx IN (0, 1) THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    LOCATION_CODE_SUBURBAN = CASE \000d\000a        WHEN idx = 2 THEN 1\000d\000a        ELSE 0\000d\000a    END\000d\000a[*]FROM (\000d\000a    SELECT \000d\000a        CIN, \000d\000a        FLOOR(RAND() * 3) AS idx \000d\000a    FROM votre_table\000d\000a) AS random_values\000d\000aWHERE votre_table.CIN = random_values.CIN"; SQL statement:
+UPDATE UTILISATEUR
+SET 
+    MONTHS_SINCE_LAST_CLAIM = CASE 
+        WHEN idx = 0 THEN 1
+        WHEN idx = 1 THEN 12
+        WHEN idx = 2 THEN 36
+    END,
+    TOTAL_CLAIM_AMOUNT = CASE 
+        WHEN idx = 0 THEN 3000
+        WHEN idx = 1 THEN 138.130879
+        WHEN idx = 2 THEN 150
+    END,
+    MONTHLY_PREMIUM_AUTO = CASE 
+        WHEN idx = 0 THEN 250
+        WHEN idx = 1 THEN 73
+        WHEN idx = 2 THEN 60
+    END,
+    CUSTOMER_LIFETIME_VALUE = CASE 
+        WHEN idx = 0 THEN 50000
+        WHEN idx = 1 THEN 2813.692575
+        WHEN idx = 2 THEN 10000
+    END,
+    VEHICLE_CLASS_LUXURY_CAR = CASE 
+        WHEN idx = 0 THEN 1
+        ELSE 0
+    END,
+    EMPLOYMENT_STATUS_EMPLOYED = CASE 
+        WHEN idx IN (0, 1) THEN 1
+        ELSE 0
+    END,
+    LOCATION_CODE_SUBURBAN = CASE 
+        WHEN idx = 2 THEN 1
+        ELSE 0
+    END
+FROM (
+    SELECT 
+        CIN, 
+        FLOOR(RAND() * 3) AS idx 
+    FROM votre_table
+) AS random_values
+WHERE votre_table.CIN = random_values.CIN [42000-224]
+2025-03-25 13:13:29.335681+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Erreur de syntaxe dans l'instruction SQL "UPDATE UTILISATEUR\000d\000aSET \000d\000a    MONTHS_SINCE_LAST_CLAIM = CASE random_index\000d\000a        WHEN 0 THEN 1\000d\000a        WHEN 1 THEN 12\000d\000a        WHEN 2 THEN 36\000d\000a    END,\000d\000a    TOTAL_CLAIM_AMOUNT = CASE random_index\000d\000a        WHEN 0 THEN 3000\000d\000a        WHEN 1 THEN 138.130879\000d\000a        WHEN 2 THEN 150\000d\000a    END,\000d\000a    MONTHLY_PREMIUM_AUTO = CASE random_index\000d\000a        WHEN 0 THEN 250\000d\000a        WHEN 1 THEN 73\000d\000a        WHEN 2 THEN 60\000d\000a    END,\000d\000a    CUSTOMER_LIFETIME_VALUE = CASE random_index\000d\000a        WHEN 0 THEN 50000\000d\000a        WHEN 1 THEN 2813.692575\000d\000a        WHEN 2 THEN 10000\000d\000a    END,\000d\000a    VEHICLE_CLASS_LUXURY_CAR = CASE random_index\000d\000a        WHEN 0 THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    EMPLOYMENT_STATUS_EMPLOYED = CASE\000d\000a        WHEN random_index IN (0, 1) THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    LOCATION_CODE_SUBURBAN = CASE\000d\000a        WHEN random_index = 2 THEN 1\000d\000a        ELSE 0\000d\000a    END\000d\000a[*]FROM (\000d\000a    SELECT \000d\000a        CIN, \000d\000a        FLOOR(RAND() * 3) AS random_index \000d\000a    FROM your_table_name\000d\000a) AS src\000d\000aWHERE UTILISATEUR.CIN = src.CIN"
+Syntax error in SQL statement "UPDATE UTILISATEUR\000d\000aSET \000d\000a    MONTHS_SINCE_LAST_CLAIM = CASE random_index\000d\000a        WHEN 0 THEN 1\000d\000a        WHEN 1 THEN 12\000d\000a        WHEN 2 THEN 36\000d\000a    END,\000d\000a    TOTAL_CLAIM_AMOUNT = CASE random_index\000d\000a        WHEN 0 THEN 3000\000d\000a        WHEN 1 THEN 138.130879\000d\000a        WHEN 2 THEN 150\000d\000a    END,\000d\000a    MONTHLY_PREMIUM_AUTO = CASE random_index\000d\000a        WHEN 0 THEN 250\000d\000a        WHEN 1 THEN 73\000d\000a        WHEN 2 THEN 60\000d\000a    END,\000d\000a    CUSTOMER_LIFETIME_VALUE = CASE random_index\000d\000a        WHEN 0 THEN 50000\000d\000a        WHEN 1 THEN 2813.692575\000d\000a        WHEN 2 THEN 10000\000d\000a    END,\000d\000a    VEHICLE_CLASS_LUXURY_CAR = CASE random_index\000d\000a        WHEN 0 THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    EMPLOYMENT_STATUS_EMPLOYED = CASE\000d\000a        WHEN random_index IN (0, 1) THEN 1\000d\000a        ELSE 0\000d\000a    END,\000d\000a    LOCATION_CODE_SUBURBAN = CASE\000d\000a        WHEN random_index = 2 THEN 1\000d\000a        ELSE 0\000d\000a    END\000d\000a[*]FROM (\000d\000a    SELECT \000d\000a        CIN, \000d\000a        FLOOR(RAND() * 3) AS random_index \000d\000a    FROM your_table_name\000d\000a) AS src\000d\000aWHERE UTILISATEUR.CIN = src.CIN"; SQL statement:
+UPDATE UTILISATEUR
+SET 
+    MONTHS_SINCE_LAST_CLAIM = CASE random_index
+        WHEN 0 THEN 1
+        WHEN 1 THEN 12
+        WHEN 2 THEN 36
+    END,
+    TOTAL_CLAIM_AMOUNT = CASE random_index
+        WHEN 0 THEN 3000
+        WHEN 1 THEN 138.130879
+        WHEN 2 THEN 150
+    END,
+    MONTHLY_PREMIUM_AUTO = CASE random_index
+        WHEN 0 THEN 250
+        WHEN 1 THEN 73
+        WHEN 2 THEN 60
+    END,
+    CUSTOMER_LIFETIME_VALUE = CASE random_index
+        WHEN 0 THEN 50000
+        WHEN 1 THEN 2813.692575
+        WHEN 2 THEN 10000
+    END,
+    VEHICLE_CLASS_LUXURY_CAR = CASE random_index
+        WHEN 0 THEN 1
+        ELSE 0
+    END,
+    EMPLOYMENT_STATUS_EMPLOYED = CASE
+        WHEN random_index IN (0, 1) THEN 1
+        ELSE 0
+    END,
+    LOCATION_CODE_SUBURBAN = CASE
+        WHEN random_index = 2 THEN 1
+        ELSE 0
+    END
+FROM (
+    SELECT 
+        CIN, 
+        FLOOR(RAND() * 3) AS random_index 
+    FROM your_table_name
+) AS src
+WHERE UTILISATEUR.CIN = src.CIN [42000-224]
+2025-03-25 13:42:20.689550+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLDataException: Erreur lors de la conversion de données "U&'2813.692575\\0009' (UTILISATEUR: ""EMPLOYMENT_STATUS_EMPLOYED"" INTEGER)"
+Data conversion error converting "U&'2813.692575\\0009' (UTILISATEUR: ""EMPLOYMENT_STATUS_EMPLOYED"" INTEGER)"; SQL statement:
+UPDATE "PUBLIC"."UTILISATEUR" SET "CIN"=? ,"EMAIL"=? ,"IMAGE"=? ,"IS_VERIFIED"=? ,"NAME"=? ,"PASSWORD"=? ,"USER_ROLE"=? ,"CREATION_DATE"=? ,"LOCATION"=? ,"KEYCLOAK_ID"=? ,"AGE"=? ,"GENDER"=? ,"CUSTOMER_LIFETIME_VALUE"=? ,"EMPLOYMENT_STATUS_EMPLOYED"=? ,"LOCATION_CODE_SUBURBAN"=? ,"MONTHLY_PREMIUM_AUTO"=? ,"MONTHS_SINCE_LAST_CLAIM"=? ,"TOTAL_CLAIM_AMOUNT"=? ,"VEHICLE_CLASS_LUXURY_CAR"=?  WHERE "CIN"=? [22018-224]
+2025-03-25 13:42:20.711215+01:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLDataException: Erreur lors de la conversion de données "U&'2813.692575\\0009' (UTILISATEUR: ""EMPLOYMENT_STATUS_EMPLOYED"" INTEGER)"
+Data conversion error converting "U&'2813.692575\\0009' (UTILISATEUR: ""EMPLOYMENT_STATUS_EMPLOYED"" INTEGER)"; SQL statement:
+UPDATE "PUBLIC"."UTILISATEUR" SET "CIN"=? ,"EMAIL"=? ,"IMAGE"=? ,"IS_VERIFIED"=? ,"NAME"=? ,"PASSWORD"=? ,"USER_ROLE"=? ,"CREATION_DATE"=? ,"LOCATION"=? ,"KEYCLOAK_ID"=? ,"AGE"=? ,"GENDER"=? ,"CUSTOMER_LIFETIME_VALUE"=? ,"EMPLOYMENT_STATUS_EMPLOYED"=? ,"LOCATION_CODE_SUBURBAN"=? ,"MONTHLY_PREMIUM_AUTO"=? ,"MONTHS_SINCE_LAST_CLAIM"=? ,"TOTAL_CLAIM_AMOUNT"=? ,"VEHICLE_CLASS_LUXURY_CAR"=?  WHERE "CIN"=? [22018-224]

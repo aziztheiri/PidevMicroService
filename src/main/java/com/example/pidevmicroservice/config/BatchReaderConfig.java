@@ -13,7 +13,7 @@ public class BatchReaderConfig {
     public JpaPagingItemReader<User> userItemReader(EntityManagerFactory entityManagerFactory) {
         JpaPagingItemReader<User> reader = new JpaPagingItemReader<>();
         reader.setEntityManagerFactory(entityManagerFactory);
-        reader.setQueryString("SELECT u FROM User u");
+        reader.setQueryString("SELECT u FROM User u WHERE u.age >= 20 AND u.isVerified = true");
         reader.setPageSize(100);
         return reader;
     }

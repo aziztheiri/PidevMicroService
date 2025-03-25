@@ -13,7 +13,14 @@ public class UserReportDTO {
     private String name;
     private String userRole;
     private Boolean isVerified;
-    private String creationDate; // On peut formater la date en chaîne
+    private String creationDate;
     private Integer age;
     private String gender;
+    private Long monthsSinceLastClaim;
+    private Double totalClaimAmount;
+    private Long monthlyPremiumAuto;
+    private Double customerLifetimeValue;
+    private Integer vehicleClassLuxuryCar;
+    private Integer employmentStatusEmployed;
+    private Integer locationCodeSuburban;
 }
