@@ -1,4 +1,5 @@
 package com.example.pidevmicroservice.services;
+import com.example.pidevmicroservice.config.RabbitMQConfig;
 import com.example.pidevmicroservice.entities.PasswordResetToken;
 import com.example.pidevmicroservice.repositories.PasswordResetTokenRepository;
 import org.mindrot.jbcrypt.BCrypt;
@@ -17,6 +18,7 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -318,6 +320,9 @@ public class UserService implements IUserService {
         existingUser.setPassword(hashedNewPassword);
         userRepository.save(existingUser);
     }
-
+    @RabbitListener(queues = RabbitMQConfig.RPC_QUEUE)
+    public User handleUserRpc(String cin) {
+        return userRepository.findById(cin).orElse(null);
+    }
 
 }
