@@ -98,6 +98,56 @@ public class UserRestController {
                 "api_secret", "XIhfcEzguJ_ZcZ1RDaD9am8r4bU"
         ));
     }
+    @GetMapping("/cluster")
+    public ResponseEntity<List<Map<String, Object>>> getClusteredUsers() {
+        // Retrieve users from your local repository/service
+        List<User> users = userRepository.findAll();
+
+        // Transform users to the format expected by the prediction API
+        List<Map<String, Object>> predictionInput = mapUsersForPrediction(users);
+
+        // Prepare the request to the external API
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<List<Map<String, Object>>> requestEntity = new HttpEntity<>(predictionInput, headers);
+
+        // External prediction API URL (update with your new ngrok URL)
+        String predictUrl = "https://e412-34-19-55-197.ngrok-free.app/predict";
+
+        // Call the external API
+        ResponseEntity<Map[]> responseEntity =
+                restTemplate.postForEntity(predictUrl, requestEntity, Map[].class);
+
+        if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody() != null) {
+            // Here you might choose to transform the response further if needed
+            List<Map<String, Object>> predictedUsers = Arrays.asList(responseEntity.getBody());
+            return ResponseEntity.ok(predictedUsers);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Transforms the list of users into the format expected by the prediction API.
+     */
+    private List<Map<String, Object>> mapUsersForPrediction(List<User> users) {
+        List<Map<String, Object>> predictionList = new ArrayList<>();
+        for (User user : users) {
+            Map<String, Object> mapped = new HashMap<>();
+            mapped.put("CIN", user.getCin());
+            // Use "N/A" if name is null
+            mapped.put("Name", user.getName() != null ? user.getName() : "N/A");
+            mapped.put("Months Since Last Claim", user.getMonthsSinceLastClaim());
+            mapped.put("Total Claim Amount", user.getTotalClaimAmount());
+            mapped.put("Monthly Premium Auto", user.getMonthlyPremiumAuto());
+            mapped.put("Customer Lifetime Value", user.getCustomerLifetimeValue());
+            mapped.put("Vehicle Class_Luxury Car", user.getVehicleClassLuxuryCar());
+            mapped.put("EmploymentStatus_Employed", user.getEmploymentStatusEmployed());
+            mapped.put("Location Code_Suburban", user.getLocationCodeSuburban());
+            predictionList.add(mapped);
+        }
+        return predictionList;
+    }
     @GetMapping("/run-report")
     public String runReport() {
         try {
