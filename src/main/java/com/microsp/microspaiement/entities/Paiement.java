@@ -1,8 +1,11 @@
 package com.microsp.microspaiement.entities;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -11,7 +14,7 @@ public abstract class Paiement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_p;
 
-    private double montant = 100;  // Montant fixe
+    private double montant ;
     private LocalDateTime date_paiement = LocalDateTime.now();
 
 

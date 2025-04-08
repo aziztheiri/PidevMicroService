@@ -15,8 +15,19 @@ public class PaiementSurPlaceService {
     private PaiementSurPlaceRepository paiementSurPlaceRepository;
 
     public PaiementSurPlace ajouterPaiementSurPlace(PaiementSurPlace paiement) {
+        // Normalisation de la date et du créneau
+        if (paiement.getDate_rdv() != null && paiement.getDate_rdv().contains("T")) {
+            String[] parts = paiement.getDate_rdv().split("T");
+            paiement.setDate_rdv(parts[0]); // Garde uniquement la date (YYYY-MM-DD)
+
+            // Extraction du créneau (HH:MM)
+            String timePart = parts[1].substring(0, 5);
+            paiement.setCreneau(timePart);
+        }
+
         paiement.setMontant(100);
         paiement.setDate_paiement(LocalDateTime.now());
+
         return paiementSurPlaceRepository.save(paiement);
     }
 
