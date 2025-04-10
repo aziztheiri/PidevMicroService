@@ -32,9 +32,7 @@ public class PdfPaiementEnLigneService {
 
             for (PaiementEnLigne p : paiements) {
                 table.addCell(String.valueOf(p.getId_p()));
-                table.addCell(p.getNumeroCarte());
-                table.addCell(p.getExpiration());
-                table.addCell(p.getCvv());// adapte ces champs
+                table.addCell(p.getPaymentMethodNonce());
                 table.addCell(String.valueOf(p.getMontant()));
                 table.addCell(String.valueOf(p.getDate_paiement()));
             }

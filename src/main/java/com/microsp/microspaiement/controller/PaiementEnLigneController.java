@@ -8,14 +8,30 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.braintreegateway.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/paiements/enligne")
 public class PaiementEnLigneController {
+    private BraintreeGateway gateway;
+
+    public PaiementEnLigneController() {
+        gateway = new BraintreeGateway(
+                Environment.SANDBOX,
+                "jw4y8bbgg3bn4995",
+                "929jzrnnns3btmg2",
+                "149250b7cce5d48563f8d01e53c638ba"
+        );
+    }
+
+
+
     @Autowired
     private PaiementEnLigneService paiementEnLigneService;
     @Autowired
@@ -64,6 +80,21 @@ public class PaiementEnLigneController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(bis.readAllBytes());
     }
+
+    @GetMapping("/token")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<Map<String, String>> getClientToken() {
+        String token = gateway.clientToken().generate();
+
+        // Créer un objet JSON contenant le token
+        Map<String, String> response = new HashMap<>();
+        response.put("clientToken", token);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
 
 
 }

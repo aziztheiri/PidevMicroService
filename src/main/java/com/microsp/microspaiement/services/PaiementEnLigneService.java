@@ -30,11 +30,7 @@ public class PaiementEnLigneService {
         PaiementEnLigne paiementExistant = paiementEnLigneRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paiement en ligne introuvable avec l'id " + id));
 
-        paiementExistant.setMontant(paiement.getMontant());
-        paiementExistant.setNumeroCarte(paiement.getNumeroCarte());
-        paiementExistant.setCvv(paiement.getCvv());
-        paiementExistant.setExpiration(paiement.getExpiration());
-        paiementExistant.setDate_paiement(paiement.getDate_paiement());
+        paiementExistant.setPaymentMethodNonce(paiement.getPaymentMethodNonce());
 
         return paiementEnLigneRepository.save(paiementExistant);
     }
