@@ -11,6 +11,7 @@
     import org.springframework.web.bind.annotation.*;
 
     import java.io.ByteArrayInputStream;
+    import java.math.BigDecimal;
     import java.util.List;
 
     @RestController
@@ -81,4 +82,17 @@
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(bis.readAllBytes());
         }
+
+
+        @GetMapping("/filtrer")
+        @CrossOrigin(origins = "*")
+        public List<PaiementSurPlace> filtrerPaiements(
+                @RequestParam BigDecimal minMontant,
+                @RequestParam BigDecimal maxMontant,
+                @RequestParam(required = false) String agence,
+                @RequestParam(required = false) String date) {
+            return paiementSurPlaceService.filtrerPaiements(minMontant, maxMontant, agence, date);
+        }
+
+
     }

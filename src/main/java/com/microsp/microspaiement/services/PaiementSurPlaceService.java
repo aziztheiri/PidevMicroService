@@ -5,9 +5,11 @@ import com.microsp.microspaiement.repo.PaiementSurPlaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PaiementSurPlaceService {
@@ -51,4 +53,18 @@ public class PaiementSurPlaceService {
     public void supprimerPaiementSurPlace(Long id) {
         paiementSurPlaceRepository.deleteById(id);
     }
+
+
+    public List<PaiementSurPlace> filtrerPaiements(BigDecimal minMontant, BigDecimal maxMontant, String agence, String date) {
+        return paiementSurPlaceRepository.findAll().stream()
+                .filter(p -> {
+                    BigDecimal montant = BigDecimal.valueOf(p.getMontant());
+                    return montant.compareTo(minMontant) >= 0 && montant.compareTo(maxMontant) <= 0;
+                })
+                .filter(p -> agence == null || p.getAgence().equalsIgnoreCase(agence))
+                .filter(p -> date == null || p.getDate_rdv().toString().equals(date))
+                .collect(Collectors.toList());
+    }
+
+
 }
