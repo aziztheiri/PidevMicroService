@@ -32,6 +32,11 @@ public class User {
     private LocalDateTime creationDate;
     private Integer age ;
     private String gender;
+    @Column(name = "qr_code_redeemed")
+    private Boolean qrCodeRedeemed;
+    private Boolean reduction;
+    private Boolean quizpassed;
+    private Integer points;
     @Column(name = "months_since_last_claim")
     private Long monthsSinceLastClaim;
 
@@ -52,4 +57,7 @@ public class User {
 
     @Column(name = "location_code_suburban")
     private Integer locationCodeSuburban;
+    public boolean isQrCodeRedeemed() {
+        return qrCodeRedeemed;
+    }
 }

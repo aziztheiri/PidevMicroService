@@ -5,6 +5,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.pidevmicroservice.dto.DeleteUserRequest;
 import com.example.pidevmicroservice.dto.OtpVerificationRequest;
 import com.example.pidevmicroservice.dto.PasswordUpdateRequest;
+import com.example.pidevmicroservice.dto.QuizSubmission;
 import com.example.pidevmicroservice.entities.PasswordResetToken;
 import com.example.pidevmicroservice.entities.User;
 import com.example.pidevmicroservice.entities.VerificationToken;
@@ -112,7 +113,7 @@ public class UserRestController {
         HttpEntity<List<Map<String, Object>>> requestEntity = new HttpEntity<>(predictionInput, headers);
 
         // External prediction API URL (update with your new ngrok URL)
-        String predictUrl = "https://e412-34-19-55-197.ngrok-free.app/predict";
+        String predictUrl = "http://localhost:5000/predict";
 
         // Call the external API
         ResponseEntity<Map[]> responseEntity =
@@ -501,4 +502,73 @@ public class UserRestController {
         passwordResetTokenRepository.delete(passToken);
         return ResponseEntity.ok("Password reset successfully");
     }
+    @PostMapping("/redeem/{cin}")
+    public ResponseEntity<?> redeemQRCode(@PathVariable String cin) {
+        // Get the currently authenticated user using the principal
+        Optional<User> optionalUser = userRepository.findById(cin);
+        if (!optionalUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+        User user = optionalUser.get();
+
+        // Check if the QR code has already been redeemed
+        if (user.isQrCodeRedeemed()) {
+            return ResponseEntity.badRequest().body("QR code already redeemed");
+        }
+
+        // Add points and mark QR code as redeemed
+        user.setPoints(user.getPoints() + 150);
+        user.setQrCodeRedeemed(true);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("QR code redeemed successfully. Points added: 150");
+    }
+    @PostMapping("/submit/{cin}")
+    public ResponseEntity<?> submitQuiz(@PathVariable String cin, @RequestBody QuizSubmission submission) {
+        Optional<User> optionalUser = userRepository.findById(cin);
+        if (!optionalUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        User user = optionalUser.get();
+
+        // For this example, the user gets +100 points if the quiz is passed.
+        int reward = submission.isPassed() ? 100 : 0;
+        user.setPoints(user.getPoints() + reward);
+        user.setQuizpassed(true);
+        userRepository.save(user);
+
+        // Check milestone: e.g. when user crosses 500 points (only send notification if crossing now)
+        String notification = "";
+        if (user.getPoints() >= 1200 && user.getPoints() - reward < 1200) {
+            notification = "Congratulations! You've reached 1200 points!";
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Quiz submitted. Points added: " + reward);
+        response.put("newPoints", user.getPoints());
+        response.put("notification", notification);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/reduction/{cin}")
+    public ResponseEntity<?> applyReduction(@PathVariable String cin) {
+        Optional<User> optionalUser = userRepository.findById(cin);
+        if (!optionalUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalUser.get();
+        if (user.getPoints() < 2000) {
+            return ResponseEntity.badRequest().body("Insufficient points for reduction");
+        }
+
+        if (user.getReduction()) {
+            return ResponseEntity.badRequest().body("Reduction already applied");
+        }
+
+        user.setReduction(true);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Reduction successfully applied! 🎉");
+    }
+
 }

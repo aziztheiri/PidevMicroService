@@ -200,6 +200,9 @@ public class UserService implements IUserService {
         user.setUserRole(UserRole.CUSTOMER);
         user.setCreationDate(LocalDateTime.now());
         user.setVerified(false);
+        user.setPoints(0);
+        user.setQrCodeRedeemed(false);
+        user.setQuizpassed(false);
         user.setPassword(hashedPassword);
         user.setMonthsSinceLastClaim(1L);
         user.setTotalClaimAmount(3000.0);
