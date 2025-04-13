@@ -48,7 +48,7 @@ public class PaiementEnLigneController {
 
     private String getAccessToken() {
         try {
-            // URL pour obtenir un token d'accès
+
             String url = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
 
             // L'authentification de base
@@ -60,15 +60,15 @@ public class PaiementEnLigneController {
             post.setHeader("Authorization", "Basic " + encodedAuth);
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
-            // Paramètres à envoyer dans la requête
+
             StringEntity params = new StringEntity("grant_type=client_credentials");
             post.setEntity(params);
 
-            // Effectuer la requête et obtenir la réponse
+
             HttpResponse response = client.execute(post);
             String responseBody = EntityUtils.toString(response.getEntity());
 
-            // Extraire le token d'accès de la réponse JSON
+
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(responseBody);
             return jsonNode.get("access_token").asText();
@@ -88,9 +88,41 @@ public class PaiementEnLigneController {
     private PdfPaiementEnLigneService pdfPaiementEnLigneService;
     @CrossOrigin(origins = "*")
     @PostMapping
-    public ResponseEntity<PaiementEnLigne> creerPaiementEnLigne(@RequestBody PaiementEnLigne paiement) {
-        return ResponseEntity.ok(paiementEnLigneService.ajouterPaiementEnLigne(paiement));
+    public ResponseEntity<?> creerPaiementEnLigne(@RequestBody PaiementEnLigne paiement) {
+        String nonce = paiement.getPaymentMethodNonce();
+        BigDecimal montant = BigDecimal.valueOf(paiement.getMontant());
+
+        // Vérification basique
+        if (nonce == null || montant == null) {
+            return ResponseEntity.badRequest().body("Le nonce ou le montant est manquant.");
+        }
+
+        // Création de la transaction
+        TransactionRequest request = new TransactionRequest()
+                .amount(montant)
+                .paymentMethodNonce(nonce)
+                .customerId("ilyestouil")
+                .options()
+                .submitForSettlement(true)
+                .done();
+
+        Result<Transaction> result = gateway.transaction().sale(request);
+
+        if (result.isSuccess()) {
+            Transaction transaction = result.getTarget();
+            paiement.setTransactionId(transaction.getId());
+
+            // Sauvegarde en base
+            PaiementEnLigne saved = paiementEnLigneService.ajouterPaiementEnLigne(paiement);
+            return ResponseEntity.ok(saved);
+        } else {
+            // Log complet si échec
+            String messageErreur = result.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur Braintree : " + messageErreur);
+        }
     }
+
     @CrossOrigin(origins = "*")
     @GetMapping
     public List<PaiementEnLigne> getPaiementsEnLigne() {

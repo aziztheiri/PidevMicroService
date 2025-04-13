@@ -8,10 +8,9 @@ import jakarta.persistence.Id;
 @Entity
 public class PaiementEnLigne extends Paiement {
     private String paymentMethodNonce;
+    private String transactionId;
 
-    // Les autres attributs hérités de Paiement (montant, etc.)
 
-    // Constructeurs
     public PaiementEnLigne() {
     }
 
@@ -21,6 +20,14 @@ public class PaiementEnLigne extends Paiement {
 
     public void setPaymentMethodNonce(String paymentMethodNonce) {
         this.paymentMethodNonce = paymentMethodNonce;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     // Vous pouvez supprimer les anciens champs numeroCarte, cvv, expiration
