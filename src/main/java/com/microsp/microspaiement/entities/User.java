@@ -1,19 +1,32 @@
 package com.microsp.microspaiement.entities;
 
+
+import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+
+@Entity
+@Table(name = "user_app")
 public class User {
-    private static final Long STATIC_USER_ID = 1L; // ID statique
-    private static Double walletBalance = 0.0; // Solde statique du wallet
+    @jakarta.persistence.Id
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Double walletBalance ;
 
-    public static Long getStaticUserId() {
-        return STATIC_USER_ID;
-    }
 
-    public static Double getWalletBalance() {
+    public Double getWalletBalance() {
         return walletBalance;
     }
 
-    public static void addFunds(Double amount) {
-        walletBalance += amount;
-        System.out.println("Ajout de " + amount + " au wallet de l'utilisateur " + STATIC_USER_ID + ". Nouveau solde : " + walletBalance);
+    public void setWalletBalance(Double walletBalance) {
+        this.walletBalance = walletBalance;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 }

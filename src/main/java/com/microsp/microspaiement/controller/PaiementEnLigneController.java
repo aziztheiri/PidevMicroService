@@ -4,10 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsp.microspaiement.entities.PaiementEnLigne;
 import com.microsp.microspaiement.entities.User;
+import com.microsp.microspaiement.repo.UserRepository;
 import com.microsp.microspaiement.services.PaiementEnLigneService;
 import com.microsp.microspaiement.services.PdfPaiementEnLigneService;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -25,16 +27,20 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/paiements/enligne")
 public class PaiementEnLigneController {
+
+    private static final String CLIENT_ID = "AUYTje5NW-sYODGgNPK4_Pt1KZHA-ZU6npn2nCi0-COGDfuxuhtOTd5raD5N9bOoYIZ7MibZ7ns7m_lX";
+    private static final String SECRET = "EHkMB0FiNHTr5tbfmJllNHU1C277joOaQQKRbg-RL2dnWYlSjxEGyc3qIY5vKjHkamkBqQGRLTRm_F7q";
     private BraintreeGateway gateway;
+    @Autowired
+    private UserRepository userRepository;
+
+    //private User user;
 
     public PaiementEnLigneController() {
         gateway = new BraintreeGateway(
@@ -46,28 +52,22 @@ public class PaiementEnLigneController {
     }
 
 
-    private String getAccessToken() {
+    public String getAccessToken() {
         try {
-
             String url = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
-
-            // L'authentification de base
-            String auth = "AU6MDYYQAx_o--v0mcocH47xwnKdLjYisVK9fqhCPXsBaDR4ObNSkrl9yE3gUY2D8UMR5xHasoi0BeMS:EJ-OnQxXtGtS6cQBOqiQ5CMTjMRUAExr2u1BdIBc-qdq7q2HkSkzwSotSheJBQxjMlYELgld2M-EQQrQ";
+            String auth = CLIENT_ID + ":" + SECRET;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
             HttpClient client = HttpClientBuilder.create().build();
             HttpPost post = new HttpPost(url);
+
             post.setHeader("Authorization", "Basic " + encodedAuth);
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
-
-            StringEntity params = new StringEntity("grant_type=client_credentials");
-            post.setEntity(params);
-
+            post.setEntity(new StringEntity("grant_type=client_credentials"));
 
             HttpResponse response = client.execute(post);
             String responseBody = EntityUtils.toString(response.getEntity());
-
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(responseBody);
@@ -78,6 +78,102 @@ public class PaiementEnLigneController {
             return null;
         }
     }
+
+    public String getClientToken(String accessToken) {
+        try {
+            String url = "https://api-m.sandbox.paypal.com/v1/identity/generate-token";
+
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost post = new HttpPost(url);
+
+            post.setHeader("Authorization", "Bearer " + accessToken);
+            post.setHeader("Content-Type", "application/json");
+
+            HttpResponse response = client.execute(post);
+            String responseBody = EntityUtils.toString(response.getEntity());
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = mapper.readTree(responseBody);
+            return jsonNode.get("client_token").asText();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @PostMapping("/paypal/create-order-with-token")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> createPaypalOrderWithToken(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> payload) {
+
+        try {
+            String montant = payload.get("montant");
+            if (montant == null) return ResponseEntity.badRequest().body("Montant manquant.");
+
+            // Création de l'ordre PayPal
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost post = new HttpPost("https://api-m.sandbox.paypal.com/v2/checkout/orders");
+            post.setHeader("Authorization", authHeader);  // ← ici on utilise le token fourni par l'utilisateur
+            post.setHeader("Content-Type", "application/json");
+
+            String jsonBody = """
+        {
+          "intent": "CAPTURE",
+          "purchase_units": [{
+            "amount": {
+              "currency_code": "USD",
+              "value": "%s"
+            }
+          }],
+          "application_context": {
+            "return_url": "https://example.com/success",
+            "cancel_url": "https://example.com/cancel"
+          }
+        }
+        """.formatted(montant);
+
+            post.setEntity(new StringEntity(jsonBody));
+
+            HttpResponse response = client.execute(post);
+            String responseBody = EntityUtils.toString(response.getEntity());
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = mapper.readTree(responseBody);
+
+            String orderId = jsonNode.get("id").asText();
+            String approvalUrl = "";
+            for (JsonNode link : jsonNode.get("links")) {
+                if ("approve".equals(link.get("rel").asText())) {
+                    approvalUrl = link.get("href").asText();
+                    break;
+                }
+            }
+
+            Map<String, String> result = new HashMap<>();
+            result.put("orderID", orderId);
+            result.put("approvalUrl", approvalUrl);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de la création de l'ordre PayPal.");
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -176,52 +272,6 @@ public class PaiementEnLigneController {
     }
 
 
-    @PostMapping("/paypal/validate")
-    @CrossOrigin(origins = "*")
-    public ResponseEntity<?> validatePaypalOrder(@RequestBody Map<String, String> payload) {
-        String orderId = payload.get("orderID");
-        System.out.println("Received order ID: " + orderId);
-
-        try {
-            // Récupérer l'access token
-            String accessToken = getAccessToken();
-            if (accessToken == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("message", "Erreur lors de l'obtention de l'access token PayPal."));
-            }
-
-            // Appel vers l'API REST PayPal pour vérifier l'état de la commande
-            HttpClient client = HttpClientBuilder.create().build();
-            HttpPost post = new HttpPost("https://api-m.sandbox.paypal.com/v2/checkout/orders/" + orderId);
-
-            // Utilisation du Bearer token pour l'authentification
-            post.setHeader("Authorization", "Bearer " + accessToken);
-            post.setHeader("Content-Type", "application/json");
-
-            HttpResponse response = client.execute(post);
-            String responseBody = EntityUtils.toString(response.getEntity());
-
-            // Analyser la réponse JSON de PayPal
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonNode = mapper.readTree(responseBody);
-            String status = jsonNode.get("status").asText();
-
-            // Si le paiement est complet
-            if ("COMPLETED".equals(status)) {
-                double amount = jsonNode.get("purchase_units").get(0).get("amount").get("value").asDouble();
-                User.addFunds(amount);  // Simuler le rechargement du portefeuille de l'utilisateur
-                return ResponseEntity.ok(Map.of("message", "Paiement confirmé. Solde: " + User.getWalletBalance()));
-            } else {
-                return ResponseEntity.badRequest().body(Map.of("message", "Paiement non confirmé."));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Erreur lors de la vérification PayPal."));
-        }
-    }
-
     @GetMapping("/filtrer")
     @CrossOrigin(origins = "*")
     public ResponseEntity<List<PaiementEnLigne>> filtrerPaiements(
@@ -236,6 +286,195 @@ public class PaiementEnLigneController {
         List<PaiementEnLigne> filtres = paiementEnLigneService.filtrerPaiements(minMontant, maxMontant, datePaiement, paymentMethodNonce);
         return ResponseEntity.ok(filtres);
     }
+
+
+
+
+
+
+
+
+
+
+
+    @PostMapping("/paypal/create-order")
+    @CrossOrigin(origins = "*")
+        public ResponseEntity<?> createPaypalOrder(@RequestBody Map<String, String> payload) {
+        try {
+            System.out.println("➡️ Début de la création de l'ordre PayPal");
+
+            String montant = payload.get("montant");
+            if (montant == null) {
+                System.out.println("❌ Montant manquant.");
+                return ResponseEntity.badRequest().body("Montant manquant.");
+            }
+            double montantF = Double.parseDouble(montant);
+            System.out.println("✅ Montant reçu : " + montantF);
+
+            // Étape 1 : Générer l'access token
+            System.out.println("🔐 Génération de l'access token...");
+            String urlToken = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
+            String auth = CLIENT_ID + ":" + SECRET;
+            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost tokenRequest = new HttpPost(urlToken);
+            tokenRequest.setHeader("Authorization", "Basic " + encodedAuth);
+            tokenRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            tokenRequest.setEntity(new StringEntity("grant_type=client_credentials"));
+            HttpResponse tokenResponse = client.execute(tokenRequest);
+            String tokenBody = EntityUtils.toString(tokenResponse.getEntity());
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode tokenNode = mapper.readTree(tokenBody);
+            String accessToken = tokenNode.get("access_token").asText();
+            System.out.println("✅ Access token obtenu.");
+
+            // Étape 2 : Créer l'ordre PayPal
+            System.out.println("🧾 Création de l'ordre PayPal...");
+            HttpPost post = new HttpPost("https://api-m.sandbox.paypal.com/v2/checkout/orders");
+            post.setHeader("Authorization", "Bearer " + accessToken);
+            post.setHeader("Content-Type", "application/json");
+
+            String jsonBody = """
+        {
+          "intent": "CAPTURE",
+          "purchase_units": [{
+            "amount": {
+              "currency_code": "EUR",
+              "value": "%s"
+            }
+          }],
+          "application_context": {
+            "return_url": "https://example.com/success",
+            "cancel_url": "https://example.com/cancel"
+            
+          }
+        }
+        """.formatted(montant);
+            post.setEntity(new StringEntity(jsonBody));
+
+            HttpResponse response = client.execute(post);
+            String responseBody = EntityUtils.toString(response.getEntity());
+            JsonNode jsonNode = mapper.readTree(responseBody);
+            System.out.println("✅ Ordre PayPal créé avec succès.");
+
+            String orderId = jsonNode.get("id").asText();
+            String approvalUrl = "";
+            for (JsonNode link : jsonNode.get("links")) {
+                if ("approve".equals(link.get("rel").asText())) {
+                    approvalUrl = link.get("href").asText();
+                    break;
+                }
+            }
+
+            System.out.println("🆔 Order ID : " + orderId);
+            System.out.println("🔗 Approval URL : " + approvalUrl);
+
+            Map<String, String> result = new HashMap<>();
+            result.put("orderID", orderId);
+            result.put("approvalUrl", approvalUrl);
+
+            System.out.println("✅ Données prêtes à être envoyées au frontend.");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur lors de la création de l'ordre PayPal : " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de la création de l'ordre PayPal.");
+        }
+    }
+
+
+    @PostMapping("/paypal/capture-order")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<?> capturePaypalOrder(@RequestBody Map<String, String> payload) {
+        try {
+            System.out.println("➡️ Début de la capture PayPal");
+
+            String orderId = payload.get("orderID");
+            System.out.println("📦 orderID reçu : " + orderId);
+
+            String montant = payload.get("montant");
+            System.out.println("💰 Montant reçu : " + montant);
+            double montantF = Double.parseDouble(montant);
+
+            Long userId = Long.parseLong(payload.get("userId").toString());
+            System.out.println("👤 userId reçu : " + userId);
+
+            Optional<User> optionalUser = userRepository.findById(userId);
+
+            if (optionalUser.isPresent()) {
+                System.out.println("✅ Utilisateur trouvé en base.");
+
+                User user = optionalUser.get();
+                double oldBalance = user.getWalletBalance();
+                user.setWalletBalance(oldBalance + montantF);
+
+                userRepository.save(user);
+                System.out.println("💼 Solde mis à jour : " + oldBalance + " ➡️ " + user.getWalletBalance());
+            } else {
+                System.out.println("❌ Utilisateur non trouvé pour l'ID : " + userId);
+                throw new RuntimeException("Utilisateur non trouvé pour l'ID : " + userId);
+            }
+
+            if (orderId == null) {
+                System.out.println("❌ orderID manquant.");
+                return ResponseEntity.badRequest().body("orderID manquant.");
+            }
+
+            // 🔐 Étape 1 : Génération du token d'accès
+            System.out.println("🔐 Génération de l'access token PayPal...");
+            String urlToken = "https://api-m.sandbox.paypal.com/v1/oauth2/token";
+            String auth = CLIENT_ID + ":" + SECRET;
+            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost tokenRequest = new HttpPost(urlToken);
+            tokenRequest.setHeader("Authorization", "Basic " + encodedAuth);
+            tokenRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            tokenRequest.setEntity(new StringEntity("grant_type=client_credentials"));
+            HttpResponse tokenResponse = client.execute(tokenRequest);
+            String tokenBody = EntityUtils.toString(tokenResponse.getEntity());
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode tokenNode = mapper.readTree(tokenBody);
+            String accessToken = tokenNode.get("access_token").asText();
+            System.out.println("✅ Access token obtenu.");
+
+            // 💳 Étape 2 : Capture de l'ordre PayPal
+            System.out.println("📥 Envoi de la requête de capture pour orderID : " + orderId);
+            HttpPost captureRequest = new HttpPost("https://api-m.sandbox.paypal.com/v2/checkout/orders/" + orderId + "/capture");
+            captureRequest.setHeader("Authorization", "Bearer " + accessToken);
+            captureRequest.setHeader("Content-Type", "application/json");
+
+            HttpResponse response = client.execute(captureRequest);
+            String responseBody = EntityUtils.toString(response.getEntity());
+
+            System.out.println("📨 Réponse de PayPal reçue :");
+            System.out.println(responseBody);
+
+            JsonNode result = mapper.readTree(responseBody);
+            System.out.println("✅ Capture réussie. Retour au frontend.");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur lors de la capture de l'ordre PayPal : " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de la capture de l'ordre PayPal.");
+        }
+    }
+
+
+
+
+
+
+
+
+
 
 
 
