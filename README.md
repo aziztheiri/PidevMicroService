@@ -1,35 +1,33 @@
-Insurance Management System
-Overview
-This project is a comprehensive insurance management system designed to streamline user management, claims processing, agency administration, and payment handling. It incorporates AI-driven features for risk assessment and claim classification.
-Features
-User Management: Authentication, role-based access control
-Claims Processing: Submission, tracking, and automated classification
-Agency Management: Adding, updating, and performance monitoring
-Payment Handling: Online and on-site payment options
-AI Integration: Risk assessment, sentiment analysis for customer feedback
-Tech Stack
-Frontend
-Angular: Modern UI framework for a responsive interface
-Backend
-Spring Boot: Microservices architecture for scalability
-MySQL: Relational database management
-Other Tools
-GitHub: Version control and collaboration
-Docker: Containerization for deployment
-Postman: API testing
-Directory Structure
-/frontend  # Angular project  
-/backend   # Spring Boot services  
-/database  # SQL scripts  
-/docs      # Documentation  
-Getting Started
-Clone the repository:
-git clone https://github.com/aziztheiri/PidevMicroService.git
-Navigate to the backend folder and start the server:
-cd backend  
-mvn spring-boot:run
-Navigate to the frontend folder and launch the UI:
-cd frontend  
-npm install && ng serve
-Acknowledgments
-Special thanks to the development team and contributors who made this project possible.
+🛡️ Insurance Management System
+A comprehensive platform designed to digitize and streamline core operations in the insurance sector — from user management and claims processing to agency oversight and secure payments. This system integrates AI-driven features to enhance decision-making, automate processes, and improve user experience.
+
+🚀 Key Features
+👥 User Management
+Secure authentication, role-based access control (RBAC), profile handling, and user lifecycle management.
+
+⚠️ Claims Processing
+Seamless claim submission, real-time tracking, automated classification, and intelligent decision assistance.
+
+🏢 Agency Management
+Manage agencies and agents with performance tracking, administrative tools, and role-specific access.
+
+💳 Payment Handling
+Support for online and on-site payments, transaction logging, and invoicing.
+
+🤖 AI Integration
+Automated risk assessment, claim scoring, and sentiment analysis for customer feedback.
+
+🧰 Tech Stack
+Frontend: Angular — Responsive and modern UI
+
+Backend: Spring Boot — Microservices architecture
+
+Database: MySQL — Reliable relational data management
+
+🔧 Developer Tools
+GitHub: Version control and team collaboration
+
+Docker: Containerized deployment for consistent environments
+
+Postman: API testing and validation
+
